@@ -15,7 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { nextProjectColor, PROJECT_COLORS } from "@/lib/project-colors";
+import { displayColor, nextProjectColor, PROJECT_COLORS } from "@/lib/project-colors";
 import { catalogErrorMessage, useClients, useProjectActions, useProjects, type Project } from "@/lib/queries/catalog";
 
 export type ProjectDialogTarget = { mode: "create" } | { mode: "edit"; project: Project };
@@ -103,7 +103,7 @@ function ProjectForm({ target, onDone }: { target: ProjectDialogTarget; onDone: 
                   "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                   checked && "ring-2 ring-foreground ring-offset-2 ring-offset-background",
                 )}
-                style={{ backgroundColor: c.hex }}
+                style={{ backgroundColor: displayColor(c.hex) }}
               >
                 {checked && <Check className="size-3.5 text-background" strokeWidth={3} />}
               </button>

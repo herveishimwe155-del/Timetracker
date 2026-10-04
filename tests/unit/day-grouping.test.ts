@@ -3,6 +3,8 @@ import {
   addDaysToKey,
   dayKey,
   dayLabel,
+  displayTime,
+  hourLabel,
   entrySeconds,
   groupByDay,
   timeOfDay,
@@ -104,5 +106,19 @@ describe("groupByDay", () => {
 
   it("returns nothing for no entries", () => {
     expect(groupByDay([], "UTC", NOW)).toEqual([]);
+  });
+});
+
+describe("displayTime and hourLabel", () => {
+  it("shows 24-hour or 12-hour clocks", () => {
+    const instant = "2026-10-04T12:16:00Z"; // 14:16 in Paris
+    expect(displayTime(instant, "Europe/Paris", "24h")).toBe("14:16");
+    expect(displayTime(instant, "Europe/Paris", "12h")).toBe("2:16 PM");
+    expect(displayTime("2026-10-04T22:05:00Z", "Europe/Paris", "12h")).toBe("12:05 AM");
+  });
+
+  it("labels grid hours", () => {
+    expect([0, 9, 12, 14].map((h) => hourLabel(h, "24h"))).toEqual(["00:00", "09:00", "12:00", "14:00"]);
+    expect([0, 9, 12, 14].map((h) => hourLabel(h, "12h"))).toEqual(["12 AM", "9 AM", "12 PM", "2 PM"]);
   });
 });

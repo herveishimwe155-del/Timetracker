@@ -15,11 +15,11 @@ import { ProjectDot } from "@/components/projects/ProjectDot";
 import { useCatalogMaps } from "@/lib/queries/catalog";
 import { useSettings } from "@/lib/queries/profile";
 import { useAppCommands } from "@/components/command/AppCommands";
-import { dayKey, entrySeconds, timeOfDay } from "@/lib/time";
+import { dayKey, displayTime, entrySeconds } from "@/lib/time";
 import { tagIdsOf, type Entry } from "@/lib/queries/entries";
 
 export function EntryRow({ entry, timeZone, nowMs }: { entry: Entry; timeZone: string; nowMs: number }) {
-  const { durationFormat } = useSettings();
+  const { durationFormat, timeFormat } = useSettings();
   const { startTimer, openEditor, deleteEntry } = useAppCommands();
   const pending = entry.id.startsWith("temp-");
   const catalog = useCatalogMaps();
@@ -92,7 +92,7 @@ export function EntryRow({ entry, timeZone, nowMs }: { entry: Entry; timeZone: s
       )}
 
       <span className="tabular hidden shrink-0 text-xs text-muted-foreground sm:inline">
-        {timeOfDay(entry.start_at, timeZone)}–{entry.stop_at ? timeOfDay(entry.stop_at, timeZone) : "now"}
+        {displayTime(entry.start_at, timeZone, timeFormat)}–{entry.stop_at ? displayTime(entry.stop_at, timeZone, timeFormat) : "now"}
         {crossesMidnight && <sup className="ml-0.5">+1</sup>}
       </span>
 

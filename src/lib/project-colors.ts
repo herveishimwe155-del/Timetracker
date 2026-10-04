@@ -34,3 +34,16 @@ export function nextProjectColor(used: string[]): string {
   }
   return best;
 }
+
+const CSS_VARS = new Map<string, string>(
+  PROJECT_COLORS.map((c) => [c.hex.toLowerCase(), `var(--project-${c.name.toLowerCase()})`]),
+);
+
+/**
+ * The colour to paint for a stored project colour. Palette colours become CSS
+ * variables, so light mode swaps in steps validated for a white background;
+ * any other value (e.g. a custom hex or another var) is used as is.
+ */
+export function displayColor(color: string): string {
+  return CSS_VARS.get(color.toLowerCase()) ?? color;
+}

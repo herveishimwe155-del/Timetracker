@@ -114,3 +114,51 @@ export async function signOut() {
   await supabase.auth.signOut();
   redirect("/login");
 }
+
+/* ---------- Account settings ---------- */
+
+export type AccountState = { error?: string; success?: string };
+
+const newPassword = z
+  .object({
+    password: z.string().min(8, "Use at least 8 characters for your password.").max(72),
+    confirm: z.string(),
+  })
+  .refine((v) => v.password === v.confirm, { message: "The two passwords don't match.", path: ["confirm"] });
+
+export async function changePassword(_prev: AccountState, formData: FormData): Promise<AccountState> {
+  const parsed = newPassword.safeParse({ password: formData.get("password"), confirm: formData.get("confirm") });
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
+  if (error) {
+    if (error.code === "same_password") return { error: "That's already your password. Choose a new one." };
+    if (error.code === "weak_password") return { error: "Choose a stronger password." };
+    if (error.code === "reauthentication_needed")
+      return { error: "For security, sign out and sign in again, then change your password." };
+    console.error("Password change failed", error.code, error.message);
+    return { error: "Your password couldn't be changed. Try again." };
+  }
+  return { success: "Password changed." };
+}
+
+/** Ends every session on every device, including this one. */
+export async function signOutEverywhere() {
+  const supabase = await createClient();
+  await supabase.auth.signOut({ scope: "global" });
+  redirect("/login");
+}
+
+/** Permanently deletes the account and all its data. The user must type DELETE. */
+export async function deleteAccount(_prev: AccountState, formData: FormData): Promise<AccountState> {
+  if (formData.get("confirm") !== "DELETE") return { error: "Type DELETE in capitals to confirm." };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("delete_my_account");
+  if (error) {
+    console.error("Account deletion failed", error.code, error.message);
+    return { error: "Your account couldn't be deleted. Try again." };
+  }
+  await supabase.auth.signOut();
+  redirect("/login?deleted=1");
+}

@@ -27,7 +27,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             <Sidebar email={typeof data.claims.email === "string" ? data.claims.email : null} />
             <div className="flex min-w-0 flex-1 flex-col">
               <TimerBar />
-              <main id="main" tabIndex={-1} className="mx-auto w-full max-w-5xl flex-1 px-4 pb-8 outline-none md:px-6">
+              <main id="main" tabIndex={-1} className="w-full min-w-0 flex-1 px-4 pb-8 outline-none md:px-6">
                 {children}
               </main>
             </div>

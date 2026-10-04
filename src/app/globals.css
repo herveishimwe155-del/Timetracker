@@ -6,7 +6,8 @@
 
 /*
  * Monolith design tokens.
- * The app is dark only, so :root holds the final values.
+ * Dark is the default (:root). Light mode overrides the palette on
+ * html[data-theme="light"], set before first paint by the script in the root layout.
  * shadcn/ui reads its own names (--background, --primary, --accent...), which are
  * mapped onto the Monolith palette below. Note: shadcn's --accent is the subtle
  * hover fill; the Monolith emerald accent is --brand (Tailwind: bg-brand, text-brand).
@@ -25,6 +26,17 @@
   --brand-2: #22d3ee; /* cyan-400, charts and secondary highlights */
   --danger: #ef4444; /* red-500 */
   --radius: 4px;
+
+  /* Project colours, stepped per theme (src/lib/project-colors.ts maps hex → these) */
+  --project-blue: #3987e5;
+  --project-orange: #d95926;
+  --project-aqua: #199e70;
+  --project-yellow: #c98500;
+  --project-magenta: #d55181;
+  --project-green: #008300;
+  --project-violet: #9085e9;
+  --project-red: #e66767;
+  --no-project: #52525b; /* zinc-600 */
 
   /* shadcn/ui names mapped to Monolith */
   --background: var(--bg);
@@ -58,6 +70,38 @@
   --sidebar-accent-foreground: var(--text);
   --sidebar-border: var(--line);
   --sidebar-ring: var(--brand);
+}
+
+/* Light mode: same roles, light steps. Text-bearing colours meet WCAG AA (4.5:1) on white. */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --bg: #fafafa; /* zinc-50 */
+  --surface: #ffffff;
+  --surface-2: #f4f4f5; /* zinc-100 */
+  --line: #e4e4e7; /* zinc-200 */
+  --text: #09090b; /* zinc-950 */
+  --text-muted: #71717a; /* zinc-500, 4.8:1 on white */
+  --brand: #047857; /* emerald-700, 5.5:1 on white */
+  --brand-2: #0e7490; /* cyan-700 */
+  --danger: #dc2626; /* red-600 */
+
+  --primary-foreground: #ffffff;
+  --sidebar: var(--surface);
+  --sidebar-primary-foreground: #ffffff;
+  --chart-3: #a1a1aa;
+  --chart-4: #d4d4d8;
+  --chart-5: #e4e4e7;
+
+  --project-blue: #2a78d6;
+  --project-orange: #eb6834;
+  --project-aqua: #1baf7a;
+  --project-yellow: #eda100;
+  --project-magenta: #e87ba4;
+  --project-green: #008300;
+  --project-violet: #4a3aa7;
+  --project-red: #e34948;
+  --no-project: #a1a1aa; /* zinc-400 */
 }
 
 @theme inline {

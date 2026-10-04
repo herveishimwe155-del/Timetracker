@@ -1,6 +1,6 @@
-# Time Tracker
+# Tickr
 
-Web-first time tracker in the Monolith style. Next.js (App Router) + TypeScript, Tailwind CSS v4, shadcn/ui (Radix), Supabase, deployed on Vercel.
+Tickr is a web-first time tracker in the Monolith style. Next.js (App Router) + TypeScript, Tailwind CSS v4, shadcn/ui (Radix), Supabase, deployed on Vercel.
 
 ## Run locally
 

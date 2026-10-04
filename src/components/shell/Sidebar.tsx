@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
-import { LogOut, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { LogOut, Moon, PanelLeftClose, PanelLeftOpen, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useLocalStorageFlag } from "@/hooks/use-local-storage-flag";
 import { signOut } from "@/lib/auth/actions";
+import { useResolvedTheme, useThemePreference } from "@/lib/theme";
+import { APP_NAME, LogoMark } from "./Logo";
 import { footerNav, mainNav, type NavItem } from "./nav";
 
 function NavLink({ item, active, collapsed }: { item: NavItem; active: boolean; collapsed: boolean }) {
@@ -41,6 +43,9 @@ function NavLink({ item, active, collapsed }: { item: NavItem; active: boolean; 
 export function Sidebar({ email }: { email: string | null }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useLocalStorageFlag("sidebar-collapsed", false);
+  const theme = useResolvedTheme();
+  const [, setTheme] = useThemePreference();
+  const nextTheme = theme === "dark" ? "light" : "dark";
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
   // Ctrl/Cmd + B toggles the sidebar.
@@ -64,8 +69,8 @@ export function Sidebar({ email }: { email: string | null }) {
       )}
     >
       <div className={cn("flex h-12 items-center justify-center gap-2 border-b border-line", !collapsed && "md:justify-start md:px-3")}>
-        <span aria-hidden className="size-2.5 shrink-0 rounded-full bg-brand" />
-        {!collapsed && <span className="hidden truncate font-medium tracking-tight md:inline">Time Tracker</span>}
+        <LogoMark />
+        {!collapsed && <span className="hidden truncate font-semibold tracking-tight md:inline">{APP_NAME}</span>}
       </div>
 
       <nav aria-label="Main" className="flex flex-1 flex-col gap-0.5 p-2">
@@ -98,6 +103,20 @@ export function Sidebar({ email }: { email: string | null }) {
               <kbd className="tabular text-xs text-muted-foreground">Ctrl B</kbd>
             </>
           )}
+        </button>
+        <button
+          type="button"
+          onClick={() => setTheme(nextTheme)}
+          aria-label={`Switch to ${nextTheme} mode`}
+          title={collapsed ? `Switch to ${nextTheme} mode` : undefined}
+          className={cn(
+            "flex h-8 w-full items-center justify-center gap-2 rounded-sm text-muted-foreground transition-colors outline-none",
+            "hover:bg-surface hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring",
+            !collapsed && "md:justify-start md:px-2",
+          )}
+        >
+          {theme === "dark" ? <Sun className="size-4 shrink-0" strokeWidth={1.75} /> : <Moon className="size-4 shrink-0" strokeWidth={1.75} />}
+          {!collapsed && <span className="hidden md:inline">{theme === "dark" ? "Light mode" : "Dark mode"}</span>}
         </button>
         <form action={signOut}>
           <button
