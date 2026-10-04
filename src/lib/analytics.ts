@@ -22,7 +22,9 @@ export type AnalyticsEvent =
   | "tag_created"
   | "report_viewed"
   | "csv_exported"
-  | "settings_saved";
+  | "settings_saved"
+  | "goal_created"
+  | "week_copied";
 
 let started = false;
 

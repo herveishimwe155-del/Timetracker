@@ -144,3 +144,58 @@ export function useTagActions() {
   });
   return { create };
 }
+
+export type ProjectStats = { trackedSeconds: number; lastTrackedAt: string | null; entryCount: number };
+
+/** Total tracked time and last activity per project id (from the project_stats function). */
+export function useProjectStats() {
+  return useQuery({
+    // Under "entries" so it refreshes whenever entries change.
+    queryKey: ["entries", "project-stats"],
+    queryFn: async () => {
+      const { data, error } = await createClient().rpc("project_stats");
+      if (error) throw error;
+      return new Map<string, ProjectStats>(
+        data.map((r) => [
+          r.project_id,
+          { trackedSeconds: Number(r.tracked_seconds), lastTrackedAt: r.last_tracked_at, entryCount: Number(r.entry_count) },
+        ]),
+      );
+    },
+  });
+}
+
+export type Goal = Tables<"goals">;
+
+export function useGoals() {
+  return useQuery({
+    queryKey: ["goals"],
+    queryFn: async () => {
+      const { data, error } = await createClient().from("goals").select("*").order("created_at");
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+export function useGoalActions() {
+  const client = useQueryClient();
+  const refresh = () => client.invalidateQueries({ queryKey: ["goals"] });
+  const create = useMutation({
+    mutationFn: async (values: TablesInsert<"goals">) => {
+      const { error } = await createClient().from("goals").insert(values);
+      if (error) throw error;
+    },
+    onError: () => toast.error("The goal couldn't be saved. Try again."),
+    onSettled: refresh,
+  });
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await createClient().from("goals").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onError: () => toast.error("The goal couldn't be deleted. Try again."),
+    onSettled: refresh,
+  });
+  return { create, remove };
+}

@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import {
+  keepPreviousData,
   useInfiniteQuery,
   useMutation,
   useQuery,
@@ -13,6 +14,8 @@ import type { PostgrestError } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import type { Tables, TablesInsert, TablesUpdate } from "@/lib/supabase/database.types";
 import { track } from "@/lib/analytics";
+import { fetchAllPages } from "@/lib/supabase/paginate";
+import { rangeInstants, type DayRange } from "@/lib/reports";
 import { addDaysToKey, dayKey, wallTimeToInstant } from "@/lib/time";
 
 /** An entry with the ids of its tags. */
@@ -32,6 +35,7 @@ export const entryKeys = {
   all: ["entries"] as const,
   running: ["entries", "running"] as const,
   list: (timeZone: string) => ["entries", "list", timeZone] as const,
+  range: (timeZone: string, range: DayRange) => ["entries", "range", timeZone, range.from, range.to] as const,
 };
 
 type EntryPage = { entries: Entry[]; endKey: string; hasOlder: boolean };
@@ -105,7 +109,33 @@ const REALTIME_TABLES = {
   projects: [["projects"]],
   clients: [["clients"]],
   tags: [["tags"]],
+  goals: [["goals"]],
 } as const;
+
+/**
+ * Every entry overlapping a range of days (the running one included), with tags.
+ * Used by the Calendar and Timesheet views.
+ */
+export function useRangeEntries(range: DayRange, timeZone: string) {
+  return useQuery({
+    queryKey: entryKeys.range(timeZone, range),
+    queryFn: async () => {
+      const { fromMs, toMs } = rangeInstants(range, timeZone);
+      const supabase = createClient();
+      return fetchAllPages<Entry>((first, last) =>
+        supabase
+          .from("time_entries")
+          .select(ENTRY_SELECT)
+          .lt("start_at", new Date(toMs).toISOString())
+          .or(`stop_at.is.null,stop_at.gt.${new Date(fromMs).toISOString()}`)
+          .order("start_at")
+          .order("id")
+          .range(first, last),
+      );
+    },
+    placeholderData: keepPreviousData,
+  });
+}
 
 /** Keeps entries, projects, clients and tags in sync with other tabs and devices. */
 export function useRealtimeSync() {
@@ -144,6 +174,11 @@ function patchListed(client: QueryClient, update: (entries: Entry[]) => Entry[])
   client.setQueriesData<EntryPages>({ queryKey: ["entries", "list"] }, (data) =>
     data ? { ...data, pages: data.pages.map((p) => ({ ...p, entries: update(p.entries) })) } : data,
   );
+}
+
+/** Applies an optimistic change to the Calendar/Timesheet range data too. */
+function patchRanges(client: QueryClient, update: (entries: Entry[]) => Entry[]) {
+  client.setQueriesData<Entry[]>({ queryKey: ["entries", "range"] }, (data) => (data ? update(data) : data));
 }
 
 async function snapshot(client: QueryClient) {
@@ -194,7 +229,12 @@ export function useEntryActions() {
       const nowIso = new Date().toISOString();
       if (previous) patchListed(client, (list) => [{ ...previous, stop_at: nowIso }, ...list]);
       const { tag_ids, ...rest } = fields;
-      client.setQueryData(entryKeys.running, tempEntry({ ...rest, time_entry_tags: tagRows(tag_ids), start_at: nowIso }));
+      const started = tempEntry({ ...rest, time_entry_tags: tagRows(tag_ids), start_at: nowIso });
+      client.setQueryData(entryKeys.running, started);
+      patchRanges(client, (list) => [
+        ...list.map((e) => (e.id === previous?.id ? { ...e, stop_at: nowIso } : e)),
+        started,
+      ]);
       return { saved };
     },
     onError: (_e, _v, ctx) => restore(client, ctx?.saved),
@@ -217,6 +257,7 @@ export function useEntryActions() {
       if (running) {
         const stopped = { ...running, stop_at: new Date().toISOString() };
         patchListed(client, (list) => [stopped, ...list]);
+        patchRanges(client, (list) => list.map((e) => (e.id === running.id ? stopped : e)));
       }
       client.setQueryData(entryKeys.running, null);
       return { saved };
@@ -244,6 +285,7 @@ export function useEntryActions() {
         e.id === id ? { ...e, ...changes, ...(tagIds ? { time_entry_tags: tagRows(tagIds) } : {}) } : e;
       client.setQueryData<Entry | null>(entryKeys.running, (r) => (r ? apply(r) : r));
       patchListed(client, (list) => list.map(apply));
+      patchRanges(client, (list) => list.map(apply));
       return { saved };
     },
     onError: (_e, _v, ctx) => restore(client, ctx?.saved),
@@ -264,7 +306,9 @@ export function useEntryActions() {
     },
     onMutate: async ({ tagIds, ...entry }) => {
       const saved = await snapshot(client);
-      if (entry.stop_at) patchListed(client, (list) => [tempEntry({ ...entry, time_entry_tags: tagRows(tagIds) }), ...list]);
+      const created = tempEntry({ ...entry, time_entry_tags: tagRows(tagIds) });
+      if (entry.stop_at) patchListed(client, (list) => [created, ...list]);
+      patchRanges(client, (list) => [...list, created]);
       return { saved };
     },
     onError: (_e, _v, ctx) => restore(client, ctx?.saved),
@@ -282,6 +326,7 @@ export function useEntryActions() {
       const saved = await snapshot(client);
       client.setQueryData<Entry | null>(entryKeys.running, (r) => (r?.id === entry.id ? null : r));
       patchListed(client, (list) => list.filter((e) => e.id !== entry.id));
+      patchRanges(client, (list) => list.filter((e) => e.id !== entry.id));
       return { saved };
     },
     onError: (_e, _v, ctx) => restore(client, ctx?.saved),

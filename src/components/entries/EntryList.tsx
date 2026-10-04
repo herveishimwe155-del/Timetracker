@@ -9,6 +9,8 @@ import { useNow } from "@/lib/queries/clock";
 import { useEntryPages, useRunningEntry } from "@/lib/queries/entries";
 import { useSettings } from "@/lib/queries/profile";
 import { groupByDay } from "@/lib/time";
+import { groupSimilar } from "@/lib/views";
+import { EntryGroupRow } from "./EntryGroupRow";
 import { EntryRow } from "./EntryRow";
 
 export function EntryList() {
@@ -76,11 +78,13 @@ export function EntryList() {
             </span>
           </header>
           <ul className="divide-y divide-line">
-            {group.entries
-              .filter((e) => e.stop_at)
-              .map((entry) => (
-                <EntryRow key={entry.id} entry={entry} timeZone={timeZone} nowMs={now} />
-              ))}
+            {groupSimilar(group.entries.filter((e) => e.stop_at)).map(({ key, entries }) =>
+              entries.length > 1 ? (
+                <EntryGroupRow key={key} entries={entries} timeZone={timeZone} nowMs={now} />
+              ) : (
+                <EntryRow key={entries[0].id} entry={entries[0]} timeZone={timeZone} nowMs={now} />
+              ),
+            )}
           </ul>
         </section>
       ))}
