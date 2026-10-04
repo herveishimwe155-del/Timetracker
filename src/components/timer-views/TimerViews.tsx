@@ -55,7 +55,7 @@ export function TimerViews() {
 
   // The week around the anchor date feeds the totals, summary bar, calendar and timesheet.
   const week = useMemo(() => weekOf(anchor, weekStart), [anchor, weekStart]);
-  const { data: weekEntries = [] } = useRangeEntries(week, timeZone);
+  const { data: weekEntries = [], isSuccess: weekLoaded } = useRangeEntries(week, timeZone);
   // Goals always measure the present week (same cache entry when viewing this week).
   const currentWeek = useMemo(() => weekOf(today, weekStart), [today, weekStart]);
   const { data: currentEntries = [] } = useRangeEntries(currentWeek, timeZone);
@@ -187,6 +187,7 @@ export function TimerViews() {
           timeZone={timeZone}
           nowMs={now}
           durationFormat={durationFormat}
+          ready={weekLoaded}
         />
       )}
       {view === "timesheet" && (
