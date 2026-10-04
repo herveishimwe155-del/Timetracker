@@ -11,7 +11,6 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-  CommandSeparator,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useTagActions, useTags } from "@/lib/queries/catalog";
@@ -67,10 +66,16 @@ export function TagPicker({ value, onChange, variant = "compact", disabled }: Pr
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-64 p-0">
+      <PopoverContent align="start" className="w-64 p-0" aria-label="Choose tags">
         <Command loop>
           <CommandInput placeholder="Find or create a tag…" value={search} onValueChange={setSearch} />
           <CommandList className="max-h-64">
+            {/* A listbox needs at least one option, so the empty message is a disabled one. */}
+            {!(tags.length > 0 || trimmed) && (
+              <CommandItem value="__empty__" disabled forceMount className="justify-center py-6 text-muted-foreground">
+                No tags yet. Type a name to create one.
+              </CommandItem>
+            )}
             <CommandEmpty>{trimmed ? "No matching tag." : "No tags yet. Type to create one."}</CommandEmpty>
             {tags.length > 0 && (
               <CommandGroup>
@@ -87,15 +92,12 @@ export function TagPicker({ value, onChange, variant = "compact", disabled }: Pr
               </CommandGroup>
             )}
             {trimmed && !exactMatch && (
-              <>
-                <CommandSeparator />
-                <CommandGroup>
-                  <CommandItem value={`__create__ ${trimmed}`} onSelect={createTag} disabled={create.isPending}>
-                    <Plus />
-                    Create tag &ldquo;<span className="truncate">{trimmed}</span>&rdquo;
-                  </CommandItem>
-                </CommandGroup>
-              </>
+              <CommandGroup>
+                <CommandItem value={`__create__ ${trimmed}`} onSelect={createTag} disabled={create.isPending}>
+                  <Plus />
+                  Create tag &ldquo;<span className="truncate">{trimmed}</span>&rdquo;
+                </CommandItem>
+              </CommandGroup>
             )}
           </CommandList>
         </Command>

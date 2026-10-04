@@ -11,7 +11,6 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-  CommandSeparator,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { nextProjectColor } from "@/lib/project-colors";
@@ -91,10 +90,16 @@ export function ProjectPicker({ value, onChange, variant = "compact", disabled }
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-72 p-0">
+      <PopoverContent align="start" className="w-72 p-0" aria-label="Choose a project">
         <Command loop>
           <CommandInput placeholder="Find or create a project…" value={search} onValueChange={setSearch} />
           <CommandList className="max-h-72">
+            {/* A listbox needs at least one option, so the empty message is a disabled one. */}
+            {!(value || groups.length > 0 || trimmed) && (
+              <CommandItem value="__empty__" disabled forceMount className="justify-center py-6 text-muted-foreground">
+                No projects yet. Type a name to create one.
+              </CommandItem>
+            )}
             <CommandEmpty>{trimmed ? "No matching project." : "No projects yet."}</CommandEmpty>
             {value && (
               <CommandGroup>
@@ -121,15 +126,12 @@ export function ProjectPicker({ value, onChange, variant = "compact", disabled }
               </CommandGroup>
             ))}
             {trimmed && !exactMatch && (
-              <>
-                <CommandSeparator />
-                <CommandGroup>
-                  <CommandItem value={`__create__ ${trimmed}`} onSelect={createProject} disabled={create.isPending}>
-                    <Plus />
-                    Create project &ldquo;<span className="truncate">{trimmed}</span>&rdquo;
-                  </CommandItem>
-                </CommandGroup>
-              </>
+              <CommandGroup>
+                <CommandItem value={`__create__ ${trimmed}`} onSelect={createProject} disabled={create.isPending}>
+                  <Plus />
+                  Create project &ldquo;<span className="truncate">{trimmed}</span>&rdquo;
+                </CommandItem>
+              </CommandGroup>
             )}
           </CommandList>
         </Command>

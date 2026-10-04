@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { PostgrestError } from "@supabase/supabase-js";
 import { toast } from "sonner";
+import { track } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
 import type { Tables, TablesInsert, TablesUpdate } from "@/lib/supabase/database.types";
 
@@ -100,6 +101,7 @@ export function useClientActions() {
   const create = useCatalogWrite(catalogKeys.clients, "client", async (values: TablesInsert<"clients">) => {
     const { data, error } = await createClient().from("clients").insert(values).select().single();
     if (error) throw error;
+    track("client_created");
     return data;
   });
   const update = useCatalogWrite(
@@ -118,6 +120,7 @@ export function useProjectActions() {
   const create = useCatalogWrite(catalogKeys.projects, "project", async (values: TablesInsert<"projects">) => {
     const { data, error } = await createClient().from("projects").insert(values).select().single();
     if (error) throw error;
+    track("project_created", { has_client: data.client_id !== null });
     return data;
   });
   const update = useCatalogWrite(
@@ -136,6 +139,7 @@ export function useTagActions() {
   const create = useCatalogWrite(catalogKeys.tags, "tag", async (name: string) => {
     const { data, error } = await createClient().from("tags").insert({ name }).select().single();
     if (error) throw error;
+    track("tag_created");
     return data;
   });
   return { create };

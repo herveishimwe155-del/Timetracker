@@ -10,7 +10,6 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-  CommandSeparator,
   CommandShortcut,
 } from "@/components/ui/command";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
@@ -101,8 +100,6 @@ export function CommandPalette({ open, onOpenChange, running }: Props) {
                 ))}
               </CommandGroup>
             )}
-
-            <CommandSeparator />
             <CommandGroup heading="Go to">
               {[...mainNav, ...footerNav].map((item) => (
                 <CommandItem key={item.href} value={`go to ${item.label}`} onSelect={() => run(() => router.push(item.href))}>
@@ -111,8 +108,6 @@ export function CommandPalette({ open, onOpenChange, running }: Props) {
                 </CommandItem>
               ))}
             </CommandGroup>
-
-            <CommandSeparator />
             <CommandGroup heading="Account">
               <CommandItem onSelect={() => run(() => void signOut())}>
                 <LogOut />

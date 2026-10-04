@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BarChart3, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import { EmptyState } from "@/components/shell/EmptyState";
+import { track } from "@/lib/analytics";
 import { useClients, useProjects, useTags } from "@/lib/queries/catalog";
 import { useNow } from "@/lib/queries/clock";
 import { useSettings } from "@/lib/queries/profile";
@@ -76,6 +77,10 @@ export function ReportsView() {
       }),
     [entries, range, timeZone, now, filters, projects, clients],
   );
+
+  useEffect(() => {
+    track("report_viewed", { period: preset });
+  }, [preset]);
 
   const exportHref = useMemo(() => {
     const params = new URLSearchParams({
@@ -184,7 +189,7 @@ export function ReportsView() {
           </Button>
         )}
         <Button asChild variant="outline" className="ml-auto h-9">
-          <a href={exportHref} download>
+          <a href={exportHref} download onClick={() => track("csv_exported", { period: preset, filtered })}>
             <Download />
             Export CSV
           </a>
