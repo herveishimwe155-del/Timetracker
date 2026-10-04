@@ -17,8 +17,8 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Time Tracker",
-    template: "%s · Time Tracker",
+    default: "Tickr",
+    template: "%s · Tickr",
   },
   description: "Fast, keyboard-first time tracking.",
 };

@@ -4,7 +4,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import type { DurationFormat } from "@/lib/time";
 
-export type Settings = { timeZone: string; weekStart: number; durationFormat: DurationFormat };
+export type TimeFormat = "12h" | "24h";
+export type Settings = {
+  timeZone: string;
+  weekStart: number;
+  durationFormat: DurationFormat;
+  timeFormat: TimeFormat;
+  fullName: string;
+};
 
 const browserTimeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
 const DURATION_FORMATS: DurationFormat[] = ["clock", "decimal", "classic"];
@@ -15,7 +22,7 @@ function useProfile() {
     queryFn: async () => {
       const { data, error } = await createClient()
         .from("profiles")
-        .select("time_zone, week_start, duration_format")
+        .select("time_zone, week_start, duration_format, time_format, full_name")
         .maybeSingle();
       if (error) throw error;
       return data;
@@ -32,6 +39,8 @@ export function useSettings(): Settings & { loaded: boolean } {
     timeZone: data?.time_zone ?? browserTimeZone(),
     weekStart: data?.week_start ?? 1,
     durationFormat: format && DURATION_FORMATS.includes(format) ? format : "clock",
+    timeFormat: data?.time_format === "12h" ? "12h" : "24h",
+    fullName: data?.full_name ?? "",
     loaded: isSuccess,
   };
 }
@@ -50,6 +59,8 @@ export function useSaveSettings() {
         time_zone: settings.timeZone,
         week_start: settings.weekStart,
         duration_format: settings.durationFormat,
+        time_format: settings.timeFormat,
+        full_name: settings.fullName.trim() || null,
       });
       if (error) throw error;
     },

@@ -16,7 +16,7 @@ export function ThemeSettings() {
 
   return (
     <fieldset className="flex max-w-xl flex-col gap-2">
-      <legend className="mb-2 font-medium">Appearance</legend>
+      <legend className="sr-only">Theme</legend>
       <div className="grid gap-2 sm:grid-cols-3">
         {OPTIONS.map(({ value, label, icon: Icon, hint }) => {
           const checked = preference === value;

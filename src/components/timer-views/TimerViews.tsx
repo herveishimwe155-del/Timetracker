@@ -10,6 +10,7 @@ import { EntryList } from "@/components/entries/EntryList";
 import { useNow } from "@/lib/queries/clock";
 import { useRangeEntries } from "@/lib/queries/entries";
 import { useSettings } from "@/lib/queries/profile";
+import { useIsClient } from "@/hooks/use-is-client";
 import { useLocalStorageFlag } from "@/hooks/use-local-storage-flag";
 import { addDaysToKey, dayKey, dayLabel, formatDuration, shortDayLabel } from "@/lib/time";
 import { isoWeek, weekOf } from "@/lib/views";
@@ -83,6 +84,13 @@ export function TimerViews() {
         ? `${anchor === today ? "Today" : dayLabel(anchor, timeZone, now)} · ${shortDayLabel(anchor).split(" ")[0]}`
         : `${isCurrent ? "This week" : `${shortDayLabel(week.from)} – ${shortDayLabel(addDaysToKey(week.to, -1))}`} · W${isoWeek(week.from)}`;
   const fmt = (ms: number) => formatDuration(Math.floor(ms / 1000), durationFormat);
+  const isClient = useIsClient();
+
+  // Everything here depends on the current time and the browser's time zone, which the
+  // server can't know; drawing it only in the browser avoids hydration mismatches.
+  if (!isClient) {
+    return <div className="mt-3 h-64 animate-pulse rounded-md bg-surface" aria-busy="true" aria-label="Loading" />;
+  }
 
   return (
     <div className="flex flex-col gap-4">

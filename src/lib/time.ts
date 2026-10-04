@@ -165,3 +165,20 @@ export function startOfWeekKey(key: string, weekStart: number): string {
 export function shortDayLabel(key: string): string {
   return `${WEEKDAYS[weekdayOfKey(key)]} ${Number(key.slice(8, 10))}`;
 }
+
+/* ---------- 12- or 24-hour clock (user setting) ---------- */
+
+/** A time of day for display: "14:16" (24h) or "2:16 PM" (12h). Inputs keep using `timeOfDay`. */
+export function displayTime(value: string | number | Date, timeZone: string, format: "12h" | "24h"): string {
+  if (format === "24h") return timeOfDay(value, timeZone);
+  return formatter("time12", timeZone, { hour: "numeric", minute: "2-digit", hour12: true }, "en-US").format(
+    value instanceof Date ? value.getTime() : new Date(value).getTime(),
+  );
+}
+
+/** An hour label for grids: "14:00" (24h) or "2 PM" (12h); 0 → "00:00" / "12 AM". */
+export function hourLabel(hour: number, format: "12h" | "24h"): string {
+  if (format === "24h") return `${String(hour).padStart(2, "0")}:00`;
+  const h = hour % 12 === 0 ? 12 : hour % 12;
+  return `${h} ${hour < 12 ? "AM" : "PM"}`;
+}

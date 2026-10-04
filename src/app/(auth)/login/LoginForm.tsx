@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
+import { Logo } from "@/components/shell/Logo";
 import { signIn, signUp, type AuthState } from "@/lib/auth/actions";
 
 type Mode = "sign-in" | "sign-up";
@@ -28,7 +29,7 @@ function GoogleIcon() {
   );
 }
 
-export function LoginForm({ next, linkError }: { next: string; linkError: boolean }) {
+export function LoginForm({ next, linkError, notice }: { next: string; linkError: boolean; notice?: string }) {
   const [mode, setMode] = useState<Mode>("sign-in");
   const [signInState, signInAction, signingIn] = useActionState<AuthState, FormData>(signIn, {});
   const [signUpState, signUpAction, signingUp] = useActionState<AuthState, FormData>(signUp, {});
@@ -60,9 +61,8 @@ export function LoginForm({ next, linkError }: { next: string; linkError: boolea
   }
 
   const brand = (
-    <div className="mb-6 flex items-center gap-2">
-      <span aria-hidden className="size-2.5 rounded-full bg-brand" />
-      <span className="font-medium tracking-tight">Time Tracker</span>
+    <div className="mb-6">
+      <Logo />
     </div>
   );
 
@@ -150,7 +150,7 @@ export function LoginForm({ next, linkError }: { next: string; linkError: boolea
 
         <div aria-live="polite" className="min-h-0">
           {error && <p className="text-danger">{error}</p>}
-          {!error && state.notice && <p className="text-brand">{state.notice}</p>}
+          {!error && (state.notice ?? notice) && <p className="text-brand">{state.notice ?? notice}</p>}
         </div>
 
         <Button type="submit" className="h-9 w-full" disabled={pending}>

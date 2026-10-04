@@ -11,7 +11,7 @@ import { useAppCommands } from "@/components/command/AppCommands";
 import { useCatalogMaps } from "@/lib/queries/catalog";
 import { useSettings } from "@/lib/queries/profile";
 import { tagIdsOf, type Entry } from "@/lib/queries/entries";
-import { entrySeconds, timeOfDay } from "@/lib/time";
+import { displayTime, entrySeconds } from "@/lib/time";
 import { EntryRow } from "./EntryRow";
 
 /**
@@ -21,7 +21,7 @@ import { EntryRow } from "./EntryRow";
 export function EntryGroupRow({ entries, timeZone, nowMs }: { entries: Entry[]; timeZone: string; nowMs: number }) {
   const [open, setOpen] = useState(false);
   const { startTimer } = useAppCommands();
-  const { durationFormat } = useSettings();
+  const { durationFormat, timeFormat } = useSettings();
   const catalog = useCatalogMaps();
   const first = entries[0];
   const project = first.project_id ? catalog.projects.get(first.project_id) : undefined;
@@ -57,7 +57,7 @@ export function EntryGroupRow({ entries, timeZone, nowMs }: { entries: Entry[]; 
           </span>
         )}
         <span className="tabular hidden shrink-0 text-xs text-muted-foreground sm:inline">
-          {timeOfDay(earliest, timeZone)}–{timeOfDay(latest, timeZone)}
+          {displayTime(earliest, timeZone, timeFormat)}–{displayTime(latest, timeZone, timeFormat)}
         </span>
         <TimerDigits seconds={seconds} size="sm" format={durationFormat} className="w-[8ch] shrink-0 text-right" />
         <div className="flex w-14 shrink-0 items-center opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">

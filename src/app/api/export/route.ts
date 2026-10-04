@@ -10,15 +10,17 @@ const choice = z.union([z.literal("all"), z.literal("none"), z.uuid()]);
 
 const params = z
   .object({
-    from: dayKey,
-    to: dayKey, // exclusive
+    all: z.literal("1").optional(), // every entry; from/to are then not needed
+    from: dayKey.optional(),
+    to: dayKey.optional(), // exclusive
     client: choice.default("all"),
     project: choice.default("all"),
     tag: z.union([z.literal("all"), z.uuid()]).default("all"),
     billable: z.enum(["all", "billable", "non-billable"]).default("all"),
   })
-  .refine((p) => p.from < p.to, "from must be before to")
-  .refine((p) => daysIn({ from: p.from, to: p.to }).length <= 366, "Export at most a year at a time");
+  .refine((p) => p.all === "1" || (p.from !== undefined && p.to !== undefined), "from and to are required")
+  .refine((p) => p.all === "1" || p.from! < p.to!, "from must be before to")
+  .refine((p) => p.all === "1" || daysIn({ from: p.from!, to: p.to! }).length <= 366, "Export at most a year at a time");
 
 /**
  * GET /api/export?from=YYYY-MM-DD&to=YYYY-MM-DD[&client=&project=&tag=&billable=]
@@ -39,7 +41,9 @@ export async function GET(request: NextRequest) {
   try {
     const { data: profile } = await supabase.from("profiles").select("time_zone").maybeSingle();
     const timeZone = safeTimeZone(profile?.time_zone);
-    const { fromMs, toMs } = rangeInstants({ from: p.from, to: p.to }, timeZone);
+    const { fromMs, toMs } = p.all
+      ? { fromMs: 0, toMs: 253_402_300_799_000 } // 9999-12-31
+      : rangeInstants({ from: p.from!, to: p.to! }, timeZone);
 
     const [entries, projects, clients, tags] = await Promise.all([
       fetchAllPages((from, to) =>
@@ -69,12 +73,14 @@ export async function GET(request: NextRequest) {
       CSV_HEADER,
       ...csvRows({ entries: finished, timeZone, projects: projects.data, clients: clients.data, tags: tags.data }),
     ]);
-    const lastDay = new Date(Date.parse(`${p.to}T00:00:00Z`) - 86_400_000).toISOString().slice(0, 10);
+    const filename = p.all
+      ? "tickr-all-entries.csv"
+      : `tickr-entries_${p.from}_to_${new Date(Date.parse(`${p.to}T00:00:00Z`) - 86_400_000).toISOString().slice(0, 10)}.csv`;
 
     return new NextResponse(csv, {
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": `attachment; filename="time-entries_${p.from}_to_${lastDay}.csv"`,
+        "Content-Disposition": `attachment; filename="${filename}"`,
         "Cache-Control": "private, no-store",
       },
     });

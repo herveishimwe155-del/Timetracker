@@ -26,7 +26,7 @@ export default function GlobalError({ error, retry }: { error: Error & { digest?
           fontSize: 14,
         }}
       >
-        <title>Something went wrong · Time Tracker</title>
+        <title>Something went wrong · Tickr</title>
         <main role="alert" style={{ textAlign: "center", padding: 24 }}>
           <h1 style={{ fontSize: 16, fontWeight: 500 }}>Something went wrong</h1>
           <p style={{ color: "#A1A1AA" }}>Your time entries are safe. Try again or reload the page.</p>

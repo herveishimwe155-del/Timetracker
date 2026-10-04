@@ -74,7 +74,7 @@ test.describe("signed in", () => {
     const download = page.waitForEvent("download");
     await page.getByRole("link", { name: "Export CSV" }).click();
     const file = await download;
-    expect(file.suggestedFilename()).toMatch(/^time-entries_\d{4}-\d{2}-\d{2}_to_\d{4}-\d{2}-\d{2}\.csv$/);
+    expect(file.suggestedFilename()).toMatch(/^tickr-entries_\d{4}-\d{2}-\d{2}_to_\d{4}-\d{2}-\d{2}\.csv$/);
     const csv = await (await file.createReadStream()).toArray().then((chunks) => Buffer.concat(chunks).toString("utf8"));
     expect(csv.charCodeAt(0)).toBe(0xfeff);
     expect(csv).toContain("Date,Start,End,Duration,Duration (hours),Description,Project,Client,Tags,Billable");

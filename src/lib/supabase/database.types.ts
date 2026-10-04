@@ -62,6 +62,7 @@ export type Database = {
           duration_format: string;
           full_name: string | null;
           id: string;
+          time_format: string;
           time_zone: string;
           week_start: number;
         };
@@ -70,6 +71,7 @@ export type Database = {
           duration_format?: string;
           full_name?: string | null;
           id: string;
+          time_format?: string;
           time_zone?: string;
           week_start?: number;
         };
@@ -78,6 +80,7 @@ export type Database = {
           duration_format?: string;
           full_name?: string | null;
           id?: string;
+          time_format?: string;
           time_zone?: string;
           week_start?: number;
         };
@@ -186,6 +189,7 @@ export type Database = {
     };
     Views: { [_ in never]: never };
     Functions: {
+      delete_my_account: { Args: never; Returns: undefined };
       project_stats: {
         Args: never;
         Returns: { project_id: string; tracked_seconds: number; last_tracked_at: string; entry_count: number }[];

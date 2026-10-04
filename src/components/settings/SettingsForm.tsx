@@ -5,6 +5,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import { useSaveSettings, useSettings, type Settings } from "@/lib/queries/profile";
 import { track } from "@/lib/analytics";
@@ -33,7 +34,7 @@ export function SettingsForm() {
     return <div className="h-64 animate-pulse rounded-md bg-surface" aria-busy="true" aria-label="Loading settings" />;
   }
   // Remount when the saved settings change elsewhere, so the form starts from them.
-  return <Form key={`${settings.timeZone}|${settings.weekStart}|${settings.durationFormat}`} saved={settings} />;
+  return <Form key={`${settings.timeZone}|${settings.weekStart}|${settings.durationFormat}|${settings.timeFormat}|${settings.fullName}`} saved={settings} />;
 }
 
 function Form({ saved }: { saved: Settings }) {
@@ -44,7 +45,9 @@ function Form({ saved }: { saved: Settings }) {
   const dirty =
     values.timeZone !== saved.timeZone ||
     values.weekStart !== saved.weekStart ||
-    values.durationFormat !== saved.durationFormat;
+    values.durationFormat !== saved.durationFormat ||
+    values.timeFormat !== saved.timeFormat ||
+    values.fullName.trim() !== saved.fullName;
 
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -60,6 +63,21 @@ function Form({ saved }: { saved: Settings }) {
 
   return (
     <form onSubmit={submit} className="flex max-w-xl flex-col gap-6">
+      <section className="flex flex-col gap-2">
+        <label htmlFor="full-name" className="font-medium">
+          Name
+        </label>
+        <Input
+          id="full-name"
+          value={values.fullName}
+          maxLength={80}
+          autoComplete="name"
+          placeholder="Your name"
+          onChange={(e) => setValues((v) => ({ ...v, fullName: e.target.value }))}
+          className="h-9 w-72 max-w-full"
+        />
+      </section>
+
       <section className="flex flex-col gap-2">
         <label htmlFor="time-zone" className="font-medium">
           Time zone
@@ -101,6 +119,21 @@ function Form({ saved }: { saved: Settings }) {
               {FULL_WEEKDAYS[d]}
             </option>
           ))}
+        </NativeSelect>
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <label htmlFor="time-format" className="font-medium">
+          Time format
+        </label>
+        <NativeSelect
+          id="time-format"
+          value={values.timeFormat}
+          onChange={(e) => setValues((v) => ({ ...v, timeFormat: e.target.value as Settings["timeFormat"] }))}
+          className="w-48"
+        >
+          <option value="24h">24-hour (14:30)</option>
+          <option value="12h">12-hour (2:30 PM)</option>
         </NativeSelect>
       </section>
 
