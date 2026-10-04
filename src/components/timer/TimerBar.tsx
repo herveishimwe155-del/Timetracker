@@ -1,57 +1,56 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { DollarSign, FolderKanban, Play, Square } from "lucide-react";
+import { DollarSign, Play, Square } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { TIMER_INPUT_ID, useAppCommands } from "@/components/command/AppCommands";
+import { ProjectPicker } from "@/components/projects/ProjectPicker";
+import { TagPicker } from "@/components/projects/TagPicker";
 import { useNow } from "@/lib/queries/clock";
-import { entryErrorMessage, useEntryActions, useRunningEntry, type Entry } from "@/lib/queries/entries";
+import { entryErrorMessage, tagIdsOf, useEntryActions, useRunningEntry, type Entry } from "@/lib/queries/entries";
 import { entrySeconds, formatClock } from "@/lib/time";
 import { TimerDigits } from "./TimerDigits";
 
 export function TimerBar() {
   const { data: running = null } = useRunningEntry();
   const { update } = useEntryActions();
-  const { startTimer, toggleTimer } = useAppCommands();
+  const { toggleTimer, startFromBar, draft, setDraft } = useAppCommands();
   const now = useNow(1000, running !== null);
-  const [draftBillable, setDraftBillable] = useState(false);
   const elapsed = running ? entrySeconds(running, now) : 0;
 
   useRunningTitle(running, elapsed);
 
-  const saveRunning = (changes: Partial<Pick<Entry, "description" | "billable">>) => {
+  const saveRunning = (changes: Partial<Pick<Entry, "description" | "billable" | "project_id">>, tagIds?: string[]) => {
     if (!running || running.id.startsWith("temp-")) return;
-    update.mutate({ id: running.id, changes }, { onError: (e) => toast.error(entryErrorMessage(e)) });
+    update.mutate({ id: running.id, changes, tagIds }, { onError: (e) => toast.error(entryErrorMessage(e)) });
   };
 
-  const billable = running ? running.billable : draftBillable;
+  const billable = running ? running.billable : draft.billable;
+  const projectId = running ? running.project_id : draft.projectId;
+  const tagIds = running ? tagIdsOf(running) : draft.tagIds;
 
   return (
     <div className="sticky top-0 z-10 flex h-12 items-center gap-2 border-b border-line bg-background/95 px-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 md:px-4">
       <DescriptionInput
         initial={running?.description ?? ""}
         running={running !== null}
-        onStart={(description) => {
-          startTimer({ description, billable: draftBillable });
-          setDraftBillable(false);
-        }}
+        onStart={startFromBar}
         onSave={(description) => saveRunning({ description })}
       />
 
-      <Button
-        variant="ghost"
-        size="sm"
-        disabled
-        className="hidden text-muted-foreground sm:inline-flex"
-        title="Projects arrive in the next update"
-      >
-        <FolderKanban strokeWidth={1.75} />
-        No project
-      </Button>
+      <ProjectPicker
+        value={projectId}
+        onChange={(id) => (running ? saveRunning({ project_id: id }) : setDraft((d) => ({ ...d, projectId: id })))}
+      />
+
+      <TagPicker
+        value={tagIds}
+        onChange={(ids) => (running ? saveRunning({}, ids) : setDraft((d) => ({ ...d, tagIds: ids })))}
+      />
 
       <Tooltip>
         <TooltipTrigger asChild>
@@ -60,7 +59,7 @@ export function TimerBar() {
             size="icon"
             aria-label="Billable"
             aria-pressed={billable}
-            onClick={() => (running ? saveRunning({ billable: !billable }) : setDraftBillable(!billable))}
+            onClick={() => (running ? saveRunning({ billable: !billable }) : setDraft((d) => ({ ...d, billable: !billable })))}
             className={cn("text-muted-foreground", billable && "text-brand hover:text-brand")}
           >
             <DollarSign strokeWidth={1.75} />
@@ -77,9 +76,7 @@ export function TimerBar() {
             size="icon"
             onClick={() => {
               if (running) return toggleTimer();
-              const input = document.getElementById(TIMER_INPUT_ID) as HTMLInputElement | null;
-              startTimer({ description: input?.value.trim() ?? "", billable: draftBillable });
-              setDraftBillable(false);
+              startFromBar();
             }}
             aria-label={running ? "Stop timer" : "Start timer"}
             aria-keyshortcuts="S"
@@ -104,7 +101,7 @@ function DescriptionInput({
 }: {
   initial: string;
   running: boolean;
-  onStart: (description: string) => void;
+  onStart: () => void;
   onSave: (description: string) => void;
 }) {
   const [value, setValue] = useState(initial);
@@ -140,7 +137,7 @@ function DescriptionInput({
             commit();
             e.currentTarget.blur();
           } else {
-            onStart(value.trim());
+            onStart();
           }
         } else if (e.key === "Escape") {
           setValue(synced);

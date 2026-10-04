@@ -136,8 +136,12 @@ export type Database = {
     Views: { [_ in never]: never };
     Functions: {
       server_now: { Args: never; Returns: string };
+      set_entry_tags: {
+        Args: { p_entry_id: string; p_tag_ids: string[] };
+        Returns: undefined;
+      };
       start_timer: {
-        Args: { p_billable?: boolean; p_description?: string; p_project_id?: string };
+        Args: { p_billable?: boolean; p_description?: string; p_project_id?: string; p_tag_ids?: string[] };
         Returns: TimeEntryRow;
         SetofOptions: { from: "*"; to: "time_entries"; isOneToOne: true; isSetofReturn: false };
       };
