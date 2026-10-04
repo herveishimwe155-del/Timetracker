@@ -16,8 +16,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { addDaysToKey, dayKey, formatClock, timeOfDay, wallTimeToInstant } from "@/lib/time";
-import { entryErrorMessage, useEntryActions, type Entry } from "@/lib/queries/entries";
+import { entryErrorMessage, useEntryActions, useEntryPages, useRunningEntry, type Entry } from "@/lib/queries/entries";
 import { useSettings } from "@/lib/queries/profile";
+import { defaultRange } from "@/lib/entry-range";
 
 /** What the editor opens with: an entry to edit, or values for a new one. */
 export type EditorTarget =
@@ -40,11 +41,10 @@ function toInstants(date: string, start: string, end: string, timeZone: string) 
   return { startAt, stopAt, endsNextDay };
 }
 
-function initialValues(target: EditorTarget, timeZone: string) {
+function initialValues(target: EditorTarget, timeZone: string, fallback: { start: number; end: number }) {
   const source = target.mode === "edit" ? target.entry : target.initial;
-  const now = Date.now();
-  const startAt = source?.start_at ?? new Date(now - 60 * 60_000).toISOString();
-  const stopAt = source?.stop_at ?? new Date(now).toISOString();
+  const startAt = source?.start_at ?? new Date(fallback.start).toISOString();
+  const stopAt = source?.stop_at ?? new Date(fallback.end).toISOString();
   return {
     description: source?.description ?? "",
     date: dayKey(startAt, timeZone),
@@ -70,7 +70,11 @@ export function EntryEditor({ target, onClose }: { target: EditorTarget | null; 
 function EditorForm({ target, onDone }: { target: EditorTarget; onDone: () => void }) {
   const { timeZone } = useSettings();
   const { create, update } = useEntryActions();
-  const [values, setValues] = useState(() => initialValues(target, timeZone));
+  const { data: pages } = useEntryPages(timeZone);
+  const { data: running = null } = useRunningEntry();
+  const [values, setValues] = useState(() =>
+    initialValues(target, timeZone, defaultRange(pages?.pages.flatMap((p) => p.entries) ?? [], running, Date.now())),
+  );
   const [error, setError] = useState<string | null>(null);
   const pending = create.isPending || update.isPending;
 
