@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
-import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { LogOut, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useLocalStorageFlag } from "@/hooks/use-local-storage-flag";
+import { signOut } from "@/lib/auth/actions";
 import { footerNav, mainNav, type NavItem } from "./nav";
 
 function NavLink({ item, active, collapsed }: { item: NavItem; active: boolean; collapsed: boolean }) {
@@ -37,7 +38,7 @@ function NavLink({ item, active, collapsed }: { item: NavItem; active: boolean; 
   );
 }
 
-export function Sidebar() {
+export function Sidebar({ email }: { email: string | null }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useLocalStorageFlag("sidebar-collapsed", false);
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
@@ -98,6 +99,23 @@ export function Sidebar() {
             </>
           )}
         </button>
+        <form action={signOut}>
+          <button
+            type="submit"
+            aria-label="Sign out"
+            title={email ? `Signed in as ${email}` : undefined}
+            className={cn(
+              "flex h-8 w-full items-center justify-center gap-2 rounded-sm text-muted-foreground transition-colors outline-none",
+              "hover:bg-surface hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring",
+              !collapsed && "md:justify-start md:px-2",
+            )}
+          >
+            <LogOut className="size-4 shrink-0" strokeWidth={1.75} />
+            {!collapsed && (
+              <span className="hidden min-w-0 flex-1 truncate text-left md:inline">Sign out</span>
+            )}
+          </button>
+        </form>
       </div>
     </aside>
   );
