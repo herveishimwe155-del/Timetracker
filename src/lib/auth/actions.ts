@@ -60,6 +60,11 @@ function authErrorMessage(error: AuthError, fallback: string): string {
       return "New sign-ups are turned off right now.";
   }
   if (error.status === 429) return "Too many attempts. Wait a minute and try again.";
+  // The request never reached Supabase: a network failure, or a wrong NEXT_PUBLIC_SUPABASE_URL.
+  if (error.name === "AuthRetryableFetchError" || !error.status) {
+    console.error("Supabase auth unreachable", error.name, error.message);
+    return "Can't reach the sign-in service right now. Try again in a moment.";
+  }
   console.error("Supabase auth error", error.code, error.status, error.message);
   return fallback;
 }
