@@ -26,6 +26,36 @@ export type Database = {
         Update: { archived?: boolean; created_at?: string; id?: string; name?: string; user_id?: string };
         Relationships: [];
       };
+      goals: {
+        Row: {
+          comparison: string;
+          created_at: string;
+          id: string;
+          period: string;
+          project_id: string | null;
+          target_seconds: number;
+          user_id: string;
+        };
+        Insert: {
+          comparison?: string;
+          created_at?: string;
+          id?: string;
+          period?: string;
+          project_id?: string | null;
+          target_seconds: number;
+          user_id?: string;
+        };
+        Update: {
+          comparison?: string;
+          created_at?: string;
+          id?: string;
+          period?: string;
+          project_id?: string | null;
+          target_seconds?: number;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       profiles: {
         Row: {
           created_at: string;

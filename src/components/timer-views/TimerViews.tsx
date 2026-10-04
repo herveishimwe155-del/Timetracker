@@ -15,6 +15,7 @@ import { addDaysToKey, dayKey, dayLabel, formatDuration, shortDayLabel } from "@
 import { isoWeek, weekOf } from "@/lib/views";
 import { splitByDay, rangeInstants } from "@/lib/reports";
 import { CalendarView } from "./CalendarView";
+import { GoalsPanel } from "./GoalsPanel";
 import { ProjectSummaryBar } from "./ProjectSummaryBar";
 import { TimesheetView } from "./TimesheetView";
 
@@ -55,6 +56,9 @@ export function TimerViews() {
   // The week around the anchor date feeds the totals, summary bar, calendar and timesheet.
   const week = useMemo(() => weekOf(anchor, weekStart), [anchor, weekStart]);
   const { data: weekEntries = [] } = useRangeEntries(week, timeZone);
+  // Goals always measure the present week (same cache entry when viewing this week).
+  const currentWeek = useMemo(() => weekOf(today, weekStart), [today, weekStart]);
+  const { data: currentEntries = [] } = useRangeEntries(currentWeek, timeZone);
 
   const totals = useMemo(() => {
     const { fromMs, toMs } = rangeInstants(week, timeZone);
@@ -172,6 +176,8 @@ export function TimerViews() {
 
       <ProjectSummaryBar entries={weekEntries} week={week} timeZone={timeZone} nowMs={now} />
 
+      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_17rem]">
+        <div className="min-w-0">
       {view === "list" && <EntryList />}
       {view === "calendar" && (
         <CalendarView
@@ -186,6 +192,16 @@ export function TimerViews() {
       {view === "timesheet" && (
         <TimesheetView week={week} entries={weekEntries} today={today} timeZone={timeZone} nowMs={now} durationFormat={durationFormat} />
       )}
+        </div>
+        <GoalsPanel
+          entries={currentEntries}
+          today={today}
+          week={currentWeek}
+          timeZone={timeZone}
+          nowMs={now}
+          durationFormat={durationFormat}
+        />
+      </div>
     </div>
   );
 }

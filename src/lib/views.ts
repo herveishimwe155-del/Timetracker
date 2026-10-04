@@ -3,7 +3,7 @@
  * Pure functions (no React, no Supabase) so they are unit-tested.
  */
 import { splitByDay, type DayRange } from "@/lib/reports";
-import { addDaysToKey, startOfWeekKey, wallTimeToInstant } from "@/lib/time";
+import { addDaysToKey, dayKey as dayKeyOf, startOfWeekKey, wallTimeToInstant } from "@/lib/time";
 
 const MINUTE = 60_000;
 type Span = { start_at: string; stop_at: string | null };
@@ -165,3 +165,55 @@ export function groupSimilar<T extends Groupable>(entries: T[]): EntryGroup<T>[]
   return [...groups.entries()].map(([key, list]) => ({ key, entries: list }));
 }
 
+
+/* ---------- Goals ---------- */
+
+export type GoalSpec = {
+  project_id: string | null;
+  comparison: string; // "at_least" | "at_most"
+  target_seconds: number;
+  period: string; // "day" | "week"
+};
+export type GoalStatus = "met" | "behind" | "within" | "over";
+
+/**
+ * Progress on a goal for the current day or week: time tracked (on the goal's
+ * project, or all time), the share of the target, and a status.
+ */
+export function goalProgress<T extends Span & { project_id: string | null }>(
+  goal: GoalSpec,
+  input: { entries: T[]; today: string; week: DayRange; timeZone: string; nowMs: number },
+) {
+  const range = goal.period === "day" ? { from: input.today, to: addDaysToKey(input.today, 1) } : input.week;
+  const fromMs = wallTimeToInstant(range.from, "00:00", input.timeZone).getTime();
+  const toMs = wallTimeToInstant(range.to, "00:00", input.timeZone).getTime();
+  const doneMs = input.entries
+    .filter((e) => goal.project_id === null || e.project_id === goal.project_id)
+    .reduce((sum, e) => sum + splitByDay(e, input.timeZone, input.nowMs, fromMs, toMs).reduce((s, p) => s + p.ms, 0), 0);
+  const targetMs = goal.target_seconds * 1000;
+  const status: GoalStatus =
+    goal.comparison === "at_most" ? (doneMs > targetMs ? "over" : "within") : doneMs >= targetMs ? "met" : "behind";
+  return { doneMs, targetMs, ratio: targetMs > 0 ? doneMs / targetMs : 0, status };
+}
+
+/* ---------- Copy last week ---------- */
+
+/**
+ * Last week's finished entries moved forward by `days` (7 by default), keeping each
+ * entry's local clock time across daylight-saving changes and its exact length.
+ */
+export function shiftEntries<T extends Span>(entries: T[], timeZone: string, days = 7) {
+  return entries
+    .filter((e): e is T & { stop_at: string } => e.stop_at !== null)
+    .map((e) => {
+      const key = dayKeyOf(e.start_at, timeZone);
+      const shift =
+        wallTimeToInstant(addDaysToKey(key, days), "00:00", timeZone).getTime() -
+        wallTimeToInstant(key, "00:00", timeZone).getTime();
+      return {
+        entry: e,
+        start_at: new Date(Date.parse(e.start_at) + shift).toISOString(),
+        stop_at: new Date(Date.parse(e.stop_at) + shift).toISOString(),
+      };
+    });
+}

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   buildTimesheet,
+  goalProgress,
+  shiftEntries,
   groupSimilar,
   isoWeek,
   layoutDay,
@@ -129,5 +131,45 @@ describe("groupSimilar", () => {
       span("2026-10-04T07:00:00Z", "2026-10-04T07:30:00Z", { id: "d", description: "K-connect", project_id: "p1", billable: true }),
     ]);
     expect(groups.map((g) => g.entries.map((e) => e.id))).toEqual([["a", "c"], ["b"], ["d"]]);
+  });
+});
+
+describe("goalProgress", () => {
+  const week = { from: "2026-09-28", to: "2026-10-05" };
+  const entries = [
+    span("2026-10-04T08:00:00Z", "2026-10-04T10:00:00Z", { project_id: "p1" }),
+    span("2026-09-29T08:00:00Z", "2026-09-29T11:00:00Z", { project_id: "p1" }),
+    span("2026-10-04T12:00:00Z", "2026-10-04T13:00:00Z", { project_id: "p2" }),
+  ];
+  const input = { entries, today: "2026-10-04", week, timeZone: "UTC", nowMs: 0 };
+
+  it("counts a project's week towards an at-least goal", () => {
+    const g = goalProgress({ project_id: "p1", comparison: "at_least", target_seconds: 4 * 3600, period: "week" }, input);
+    expect([g.doneMs / H, g.status]).toEqual([5, "met"]);
+    expect(g.ratio).toBeCloseTo(1.25);
+  });
+
+  it("counts today only for a daily goal, across all projects", () => {
+    const g = goalProgress({ project_id: null, comparison: "at_least", target_seconds: 8 * 3600, period: "day" }, input);
+    expect([g.doneMs / H, g.status]).toEqual([3, "behind"]);
+  });
+
+  it("flags an at-most goal once it is exceeded", () => {
+    const within = goalProgress({ project_id: "p2", comparison: "at_most", target_seconds: 2 * 3600, period: "day" }, input);
+    const over = goalProgress({ project_id: "p1", comparison: "at_most", target_seconds: 1 * 3600, period: "day" }, input);
+    expect([within.status, over.status]).toEqual(["within", "over"]);
+  });
+});
+
+describe("shiftEntries", () => {
+  it("moves finished entries a week forward and skips running ones", () => {
+    const moved = shiftEntries([span("2026-09-28T09:00:00Z", "2026-09-28T10:30:00Z"), span("2026-09-29T09:00:00Z", null)], "UTC");
+    expect(moved.map((m) => [m.start_at, m.stop_at])).toEqual([["2026-10-05T09:00:00.000Z", "2026-10-05T10:30:00.000Z"]]);
+  });
+
+  it("keeps the local clock time across a daylight-saving change", () => {
+    // Paris: 09:00 local on Oct 19 (UTC+2) → 09:00 local on Oct 26 (UTC+1).
+    const [m] = shiftEntries([span("2026-10-19T07:00:00Z", "2026-10-19T08:00:00Z")], "Europe/Paris");
+    expect([m.start_at, m.stop_at]).toEqual(["2026-10-26T08:00:00.000Z", "2026-10-26T09:00:00.000Z"]);
   });
 });

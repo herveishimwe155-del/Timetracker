@@ -1,15 +1,24 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { ChevronDown, Copy } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { track } from "@/lib/analytics";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { ProjectDot } from "@/components/projects/ProjectDot";
 import { ProjectPicker } from "@/components/projects/ProjectPicker";
 import { useCatalogMaps } from "@/lib/queries/catalog";
-import { entryErrorMessage, useEntryActions, type Entry } from "@/lib/queries/entries";
+import { entryErrorMessage, tagIdsOf, useEntryActions, useRangeEntries, type Entry } from "@/lib/queries/entries";
 import { NO_PROJECT_COLOR, type DayRange } from "@/lib/reports";
-import { dayKey, formatDuration, shortDayLabel, type DurationFormat } from "@/lib/time";
-import { buildTimesheet, parseDuration, slotForNewTime } from "@/lib/views";
+import { addDaysToKey, dayKey, formatDuration, shortDayLabel, type DurationFormat } from "@/lib/time";
+import { buildTimesheet, parseDuration, shiftEntries, slotForNewTime } from "@/lib/views";
 
 type Props = {
   week: DayRange;
@@ -36,6 +45,42 @@ export function TimesheetView({ week, entries, today, timeZone, nowMs, durationF
   const { create } = useEntryActions();
   // Rows added with "Add row", per week.
   const [extra, setExtra] = useState<Record<string, (string | null)[]>>({});
+  const [copying, setCopying] = useState(false);
+  const lastWeek = useMemo(() => ({ from: addDaysToKey(week.from, -7), to: week.from }), [week.from]);
+  const { data: lastWeekEntries = [] } = useRangeEntries(lastWeek, timeZone);
+  // Only entries that start last week (not ones that merely spill into it).
+  const toCopy = lastWeekEntries.filter((e) => e.stop_at && dayKey(e.start_at, timeZone) >= lastWeek.from && dayKey(e.start_at, timeZone) < lastWeek.to);
+
+  const addRows = (ids: (string | null)[]) =>
+    setExtra((x) => {
+      const current = x[week.from] ?? [];
+      return { ...x, [week.from]: [...current, ...ids.filter((id) => !current.includes(id))] };
+    });
+
+  async function copyLastWeek() {
+    setCopying(true);
+    let copied = 0;
+    let skipped = 0;
+    for (const { entry, start_at, stop_at } of shiftEntries(toCopy, timeZone)) {
+      try {
+        await create.mutateAsync({
+          description: entry.description,
+          project_id: entry.project_id,
+          billable: entry.billable,
+          start_at,
+          stop_at,
+          tagIds: tagIdsOf(entry),
+        });
+        copied++;
+      } catch {
+        skipped++; // usually an overlap with time already tracked this week
+      }
+    }
+    setCopying(false);
+    track("week_copied", { copied, skipped });
+    if (copied) toast.success(`Copied ${copied} ${copied === 1 ? "entry" : "entries"} from last week`);
+    if (skipped) toast(`${skipped} ${skipped === 1 ? "entry was" : "entries were"} skipped because they overlap time already tracked.`);
+  }
   const sheet = useMemo(
     () => buildTimesheet({ entries, week, timeZone, nowMs, extraProjects: extra[week.from] ?? [] }),
     [entries, week, timeZone, nowMs, extra],
@@ -152,13 +197,26 @@ export function TimesheetView({ week, entries, today, timeZone, nowMs, durationF
         <tfoot>
           <tr>
             <td className="px-1 py-1.5">
-              <ProjectPicker
-                value={null}
-                triggerLabel="Add row"
-                onChange={(id) =>
-                  setExtra((x) => ({ ...x, [week.from]: [...(x[week.from] ?? []).filter((p) => p !== id), id] }))
-                }
-              />
+              <div className="flex flex-wrap items-center gap-1">
+                <ProjectPicker value={null} triggerLabel="Add row" onChange={(id) => addRows([id])} />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="text-muted-foreground" disabled={copying || toCopy.length === 0}>
+                      <Copy />
+                      {copying ? "Copying…" : "Copy last week"}
+                      <ChevronDown />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-64">
+                    <DropdownMenuItem onSelect={() => addRows([...new Set(toCopy.map((e) => e.project_id))])}>
+                      Rows only
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => void copyLastWeek()}>
+                      Rows and time ({toCopy.length} {toCopy.length === 1 ? "entry" : "entries"})
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </td>
             {sheet.dayTotals.map((ms, i) => (
               <td key={sheet.days[i]} className="tabular px-1 py-1.5 text-center font-medium">

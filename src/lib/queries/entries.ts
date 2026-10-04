@@ -109,6 +109,7 @@ const REALTIME_TABLES = {
   projects: [["projects"]],
   clients: [["clients"]],
   tags: [["tags"]],
+  goals: [["goals"]],
 } as const;
 
 /**

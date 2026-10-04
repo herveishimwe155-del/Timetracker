@@ -164,3 +164,38 @@ export function useProjectStats() {
     },
   });
 }
+
+export type Goal = Tables<"goals">;
+
+export function useGoals() {
+  return useQuery({
+    queryKey: ["goals"],
+    queryFn: async () => {
+      const { data, error } = await createClient().from("goals").select("*").order("created_at");
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+export function useGoalActions() {
+  const client = useQueryClient();
+  const refresh = () => client.invalidateQueries({ queryKey: ["goals"] });
+  const create = useMutation({
+    mutationFn: async (values: TablesInsert<"goals">) => {
+      const { error } = await createClient().from("goals").insert(values);
+      if (error) throw error;
+    },
+    onError: () => toast.error("The goal couldn't be saved. Try again."),
+    onSettled: refresh,
+  });
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await createClient().from("goals").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onError: () => toast.error("The goal couldn't be deleted. Try again."),
+    onSettled: refresh,
+  });
+  return { create, remove };
+}
