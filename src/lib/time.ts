@@ -74,7 +74,7 @@ export function addDaysToKey(key: string, days: number): string {
   return date.toISOString().slice(0, 10);
 }
 
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+export const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 /** "Today", "Yesterday", or e.g. "Mon, 28 Sep" (with the year when it isn't this year). */
@@ -127,4 +127,41 @@ export function groupByDay<T extends { start_at: string; stop_at: string | null 
         entries: list,
       };
     });
+}
+
+/* ---------- Duration formats (user setting) ---------- */
+
+export type DurationFormat = "clock" | "decimal" | "classic";
+
+/**
+ * A duration in the user's chosen style:
+ * clock 5400 → "01:30:00", decimal → "1.50 h", classic → "1h 30m".
+ */
+export function formatDuration(totalSeconds: number, format: DurationFormat): string {
+  if (format === "decimal") return `${(Math.max(0, totalSeconds) / 3600).toFixed(2)} h`;
+  if (format === "classic") {
+    const { hours, minutes, seconds } = splitDuration(totalSeconds);
+    if (hours) return `${hours}h ${pad(minutes)}m`;
+    if (minutes) return `${minutes}m`;
+    return `${seconds}s`;
+  }
+  return formatClock(totalSeconds);
+}
+
+/* ---------- Weeks ---------- */
+
+/** Day of the week for a "YYYY-MM-DD" key: 0 = Sunday … 6 = Saturday. */
+export function weekdayOfKey(key: string): number {
+  const [y, m, d] = key.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+}
+
+/** First day of the week containing `key`, for a week starting on `weekStart` (0 = Sunday). */
+export function startOfWeekKey(key: string, weekStart: number): string {
+  return addDaysToKey(key, -((weekdayOfKey(key) - weekStart + 7) % 7));
+}
+
+/** Short label for chart axes: "Mon 28". */
+export function shortDayLabel(key: string): string {
+  return `${WEEKDAYS[weekdayOfKey(key)]} ${Number(key.slice(8, 10))}`;
 }

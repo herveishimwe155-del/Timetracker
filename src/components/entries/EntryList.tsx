@@ -12,7 +12,7 @@ import { groupByDay } from "@/lib/time";
 import { EntryRow } from "./EntryRow";
 
 export function EntryList() {
-  const { timeZone } = useSettings();
+  const { timeZone, durationFormat } = useSettings();
   const { data, isPending, isError, refetch, hasNextPage, fetchNextPage, isFetchingNextPage } = useEntryPages(timeZone);
   const { data: running = null } = useRunningEntry();
   const now = useNow(1000, running !== null);
@@ -70,7 +70,7 @@ export function EntryList() {
             </h2>
             <span className="flex items-center gap-3 text-muted-foreground">
               <span className="text-xs">Total</span>
-              <TimerDigits seconds={group.seconds} size="sm" className="w-[8ch] text-right" />
+              <TimerDigits seconds={group.seconds} size="sm" format={durationFormat} className="w-[8ch] text-right" />
               {/* Keeps totals aligned with the row durations above the action buttons. */}
               <span className="w-14" aria-hidden />
             </span>

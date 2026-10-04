@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { describeDuration, formatClock } from "@/lib/time";
+import { describeDuration, formatDuration, type DurationFormat } from "@/lib/time";
 
 const sizes = {
   sm: "text-sm",
@@ -13,14 +13,16 @@ type TimerDigitsProps = {
   size?: keyof typeof sizes;
   /** Emerald while a timer is running. */
   running?: boolean;
+  /** How to show the duration; the live timer always uses "clock". */
+  format?: DurationFormat;
   className?: string;
 };
 
 /**
- * A duration as H:MM:SS in JetBrains Mono with tabular numerals, so every digit
+ * A duration (a clock by default) in JetBrains Mono with tabular numerals, so every digit
  * has the same width and the clock never shifts as it ticks.
  */
-export function TimerDigits({ seconds, size = "md", running = false, className }: TimerDigitsProps) {
+export function TimerDigits({ seconds, size = "md", running = false, format = "clock", className }: TimerDigitsProps) {
   return (
     <time
       dateTime={`PT${Math.max(0, Math.floor(seconds))}S`}
@@ -32,7 +34,7 @@ export function TimerDigits({ seconds, size = "md", running = false, className }
         className,
       )}
     >
-      {formatClock(seconds)}
+      {formatDuration(seconds, format)}
     </time>
   );
 }

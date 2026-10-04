@@ -27,9 +27,30 @@ export type Database = {
         Relationships: [];
       };
       profiles: {
-        Row: { created_at: string; full_name: string | null; id: string; time_zone: string; week_start: number };
-        Insert: { created_at?: string; full_name?: string | null; id: string; time_zone?: string; week_start?: number };
-        Update: { created_at?: string; full_name?: string | null; id?: string; time_zone?: string; week_start?: number };
+        Row: {
+          created_at: string;
+          duration_format: string;
+          full_name: string | null;
+          id: string;
+          time_zone: string;
+          week_start: number;
+        };
+        Insert: {
+          created_at?: string;
+          duration_format?: string;
+          full_name?: string | null;
+          id: string;
+          time_zone?: string;
+          week_start?: number;
+        };
+        Update: {
+          created_at?: string;
+          duration_format?: string;
+          full_name?: string | null;
+          id?: string;
+          time_zone?: string;
+          week_start?: number;
+        };
         Relationships: [];
       };
       projects: {

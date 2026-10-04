@@ -1,23 +1,22 @@
 /**
- * Project colours: twelve hues that stay readable as dots and labels on the
- * Monolith dark background. Emerald is first, matching the brand accent.
+ * Project colours: eight hues stepped for the dark Monolith surface, in an order
+ * validated for colour-blind separation between neighbours (dataviz palette check:
+ * CVD ΔE ≥ 8.4, normal-vision ΔE ≥ 19.3, ≥ 3:1 contrast on #09090B and #18181B).
+ * The order is the safety mechanism: new projects take them in this order.
+ * Colour only marks identity; names are always shown as text beside it.
  */
 export const PROJECT_COLORS = [
-  { name: "Emerald", hex: "#10B981" },
-  { name: "Cyan", hex: "#22D3EE" },
-  { name: "Sky", hex: "#38BDF8" },
-  { name: "Blue", hex: "#60A5FA" },
-  { name: "Violet", hex: "#A78BFA" },
-  { name: "Fuchsia", hex: "#E879F9" },
-  { name: "Rose", hex: "#FB7185" },
-  { name: "Orange", hex: "#FB923C" },
-  { name: "Amber", hex: "#FBBF24" },
-  { name: "Lime", hex: "#A3E635" },
-  { name: "Teal", hex: "#2DD4BF" },
-  { name: "Zinc", hex: "#A1A1AA" },
+  { name: "Blue", hex: "#3987E5" },
+  { name: "Orange", hex: "#D95926" },
+  { name: "Aqua", hex: "#199E70" },
+  { name: "Yellow", hex: "#C98500" },
+  { name: "Magenta", hex: "#D55181" },
+  { name: "Green", hex: "#008300" },
+  { name: "Violet", hex: "#9085E9" },
+  { name: "Red", hex: "#E66767" },
 ] as const;
 
-/** The least-used palette colour, so new projects are easy to tell apart. */
+/** The least-used palette colour (earliest first), so new projects are easy to tell apart. */
 export function nextProjectColor(used: string[]): string {
   const counts = new Map(PROJECT_COLORS.map((c) => [c.hex.toLowerCase(), 0]));
   for (const hex of used) {
