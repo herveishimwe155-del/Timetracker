@@ -13,11 +13,13 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { TimerDigits } from "@/components/timer/TimerDigits";
 import { ProjectDot } from "@/components/projects/ProjectDot";
 import { useCatalogMaps } from "@/lib/queries/catalog";
+import { useSettings } from "@/lib/queries/profile";
 import { useAppCommands } from "@/components/command/AppCommands";
 import { dayKey, entrySeconds, timeOfDay } from "@/lib/time";
 import { tagIdsOf, type Entry } from "@/lib/queries/entries";
 
 export function EntryRow({ entry, timeZone, nowMs }: { entry: Entry; timeZone: string; nowMs: number }) {
+  const { durationFormat } = useSettings();
   const { startTimer, openEditor, deleteEntry } = useAppCommands();
   const pending = entry.id.startsWith("temp-");
   const catalog = useCatalogMaps();
@@ -69,9 +71,7 @@ export function EntryRow({ entry, timeZone, nowMs }: { entry: Entry; timeZone: s
       {project && (
         <span className="flex min-w-0 max-w-[40%] shrink items-center gap-1.5 text-xs" title={client ? `${project.name} · ${client.name}` : project.name}>
           <ProjectDot color={project.color} />
-          <span className="truncate" style={{ color: project.color }}>
-            {project.name}
-          </span>
+          <span className="truncate text-muted-foreground">{project.name}</span>
           {client && <span className="hidden truncate text-muted-foreground lg:inline">· {client.name}</span>}
         </span>
       )}
@@ -96,7 +96,7 @@ export function EntryRow({ entry, timeZone, nowMs }: { entry: Entry; timeZone: s
         {crossesMidnight && <sup className="ml-0.5">+1</sup>}
       </span>
 
-      <TimerDigits seconds={seconds} size="sm" className="w-[8ch] shrink-0 text-right" />
+      <TimerDigits seconds={seconds} size="sm" format={durationFormat} className="w-[8ch] shrink-0 text-right" />
 
       <div className="flex shrink-0 items-center opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
         <Tooltip>
