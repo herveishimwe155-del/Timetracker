@@ -156,6 +156,10 @@ export type Database = {
     };
     Views: { [_ in never]: never };
     Functions: {
+      project_stats: {
+        Args: never;
+        Returns: { project_id: string; tracked_seconds: number; last_tracked_at: string; entry_count: number }[];
+      };
       server_now: { Args: never; Returns: string };
       set_entry_tags: {
         Args: { p_entry_id: string; p_tag_ids: string[] };

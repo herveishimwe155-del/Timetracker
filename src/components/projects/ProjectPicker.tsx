@@ -23,10 +23,12 @@ type Props = {
   /** "compact" hides the label on small screens (timer bar); "field" is full width (forms). */
   variant?: "compact" | "field";
   disabled?: boolean;
+  /** Show a "+ label" button instead of the current project (e.g. "Add row"). */
+  triggerLabel?: string;
 };
 
 /** Keyboard-searchable project picker, grouped by client, that can create a project inline. */
-export function ProjectPicker({ value, onChange, variant = "compact", disabled }: Props) {
+export function ProjectPicker({ value, onChange, variant = "compact", disabled, triggerLabel }: Props) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const { data: projects = [] } = useProjects();
@@ -70,6 +72,12 @@ export function ProjectPicker({ value, onChange, variant = "compact", disabled }
   return (
     <Popover open={open} onOpenChange={(o) => (setOpen(o), o || setSearch(""))}>
       <PopoverTrigger asChild>
+        {triggerLabel ? (
+          <Button variant="ghost" size="sm" disabled={disabled} className="text-muted-foreground">
+            <Plus />
+            {triggerLabel}
+          </Button>
+        ) : (
         <Button
           variant={variant === "field" ? "outline" : "ghost"}
           size="sm"
@@ -89,6 +97,7 @@ export function ProjectPicker({ value, onChange, variant = "compact", disabled }
             <span className="truncate text-muted-foreground">· {clientName(selected.client_id)}</span>
           )}
         </Button>
+        )}
       </PopoverTrigger>
       <PopoverContent align="start" className="w-72 p-0" aria-label="Choose a project">
         <Command loop>

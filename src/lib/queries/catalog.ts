@@ -144,3 +144,23 @@ export function useTagActions() {
   });
   return { create };
 }
+
+export type ProjectStats = { trackedSeconds: number; lastTrackedAt: string | null; entryCount: number };
+
+/** Total tracked time and last activity per project id (from the project_stats function). */
+export function useProjectStats() {
+  return useQuery({
+    // Under "entries" so it refreshes whenever entries change.
+    queryKey: ["entries", "project-stats"],
+    queryFn: async () => {
+      const { data, error } = await createClient().rpc("project_stats");
+      if (error) throw error;
+      return new Map<string, ProjectStats>(
+        data.map((r) => [
+          r.project_id,
+          { trackedSeconds: Number(r.tracked_seconds), lastTrackedAt: r.last_tracked_at, entryCount: Number(r.entry_count) },
+        ]),
+      );
+    },
+  });
+}
