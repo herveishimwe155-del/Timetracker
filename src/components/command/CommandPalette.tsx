@@ -16,7 +16,7 @@ import {
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { footerNav, mainNav } from "@/components/shell/nav";
 import { signOut } from "@/lib/auth/actions";
-import { useEntryPages, type Entry } from "@/lib/queries/entries";
+import { tagIdsOf, useEntryPages, type Entry } from "@/lib/queries/entries";
 import { useSettings } from "@/lib/queries/profile";
 import { useAppCommands } from "./AppCommands";
 
@@ -90,6 +90,7 @@ export function CommandPalette({ open, onOpenChange, running }: Props) {
                           description: entry.description,
                           project_id: entry.project_id,
                           billable: entry.billable,
+                          tag_ids: tagIdsOf(entry),
                         }),
                       )
                     }

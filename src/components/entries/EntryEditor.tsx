@@ -15,15 +15,23 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { addDaysToKey, dayKey, formatClock, timeOfDay, wallTimeToInstant } from "@/lib/time";
-import { entryErrorMessage, useEntryActions, useEntryPages, useRunningEntry, type Entry } from "@/lib/queries/entries";
+import { dayKey, formatClock, timeOfDay } from "@/lib/time";
+import { ProjectPicker } from "@/components/projects/ProjectPicker";
+import { TagPicker } from "@/components/projects/TagPicker";
+import { entryErrorMessage, tagIdsOf, useEntryActions, useEntryPages, useRunningEntry, type Entry } from "@/lib/queries/entries";
 import { useSettings } from "@/lib/queries/profile";
 import { defaultRange } from "@/lib/entry-range";
+import { resolveTimes, type OriginalTimes } from "@/lib/entry-times";
 
 /** What the editor opens with: an entry to edit, or values for a new one. */
 export type EditorTarget =
   | { mode: "edit"; entry: Entry }
-  | { mode: "create"; initial?: Partial<Pick<Entry, "description" | "project_id" | "billable" | "start_at" | "stop_at">> };
+  | {
+      mode: "create";
+      initial?: Partial<Pick<Entry, "description" | "project_id" | "billable" | "start_at" | "stop_at">> & {
+        tag_ids?: string[];
+      };
+    };
 
 const form = z.object({
   description: z.string().trim().max(500, "Keep the description under 500 characters."),
@@ -31,15 +39,9 @@ const form = z.object({
   start: z.string().regex(/^\d{2}:\d{2}$/, "Enter a start time."),
   end: z.string().regex(/^\d{2}:\d{2}$/, "Enter an end time."),
   billable: z.boolean(),
+  projectId: z.string().nullable(),
+  tagIds: z.array(z.string()),
 });
-
-/** Start and stop instants from the form; an end at or before the start means the next day. */
-function toInstants(date: string, start: string, end: string, timeZone: string) {
-  const startAt = wallTimeToInstant(date, start, timeZone);
-  const endsNextDay = end <= start;
-  const stopAt = wallTimeToInstant(endsNextDay ? addDaysToKey(date, 1) : date, end, timeZone);
-  return { startAt, stopAt, endsNextDay };
-}
 
 function initialValues(target: EditorTarget, timeZone: string, fallback: { start: number; end: number }) {
   const source = target.mode === "edit" ? target.entry : target.initial;
@@ -51,6 +53,8 @@ function initialValues(target: EditorTarget, timeZone: string, fallback: { start
     start: timeOfDay(startAt, timeZone),
     end: timeOfDay(stopAt, timeZone),
     billable: source?.billable ?? false,
+    projectId: source?.project_id ?? null,
+    tagIds: target.mode === "edit" ? tagIdsOf(target.entry) : (target.initial?.tag_ids ?? []),
   };
 }
 
@@ -75,6 +79,12 @@ function EditorForm({ target, onDone }: { target: EditorTarget; onDone: () => vo
   const [values, setValues] = useState(() =>
     initialValues(target, timeZone, defaultRange(pages?.pages.flatMap((p) => p.entries) ?? [], running, Date.now())),
   );
+  // The edited entry's exact times, so unchanged fields aren't rounded to the minute on save.
+  const [original] = useState<OriginalTimes | null>(() =>
+    target.mode === "edit" && target.entry.stop_at
+      ? { date: values.date, start: values.start, end: values.end, startAt: target.entry.start_at, stopAt: target.entry.stop_at }
+      : null,
+  );
   const [error, setError] = useState<string | null>(null);
   const pending = create.isPending || update.isPending;
 
@@ -84,7 +94,7 @@ function EditorForm({ target, onDone }: { target: EditorTarget; onDone: () => vo
   };
 
   const valid = form.safeParse(values);
-  const preview = valid.success ? toInstants(values.date, values.start, values.end, timeZone) : null;
+  const preview = valid.success ? resolveTimes(values, original, timeZone) : null;
   const seconds = preview ? Math.round((preview.stopAt.getTime() - preview.startAt.getTime()) / 1000) : 0;
 
   async function submit(event: React.FormEvent) {
@@ -92,20 +102,21 @@ function EditorForm({ target, onDone }: { target: EditorTarget; onDone: () => vo
     const parsed = form.safeParse(values);
     if (!parsed.success) return setError(parsed.error.issues[0].message);
 
-    const { startAt, stopAt } = toInstants(parsed.data.date, parsed.data.start, parsed.data.end, timeZone);
+    const { startAt, stopAt } = resolveTimes(parsed.data, original, timeZone);
     const fields = {
       description: parsed.data.description,
       billable: parsed.data.billable,
+      project_id: parsed.data.projectId,
       start_at: startAt.toISOString(),
       stop_at: stopAt.toISOString(),
     };
 
     try {
       if (target.mode === "edit") {
-        await update.mutateAsync({ id: target.entry.id, changes: fields });
+        await update.mutateAsync({ id: target.entry.id, changes: fields, tagIds: parsed.data.tagIds });
         toast.success("Entry updated");
       } else {
-        await create.mutateAsync({ ...fields, project_id: target.initial?.project_id ?? null });
+        await create.mutateAsync({ ...fields, tagIds: parsed.data.tagIds });
         toast.success("Entry added");
       }
       onDone();
@@ -131,6 +142,17 @@ function EditorForm({ target, onDone }: { target: EditorTarget; onDone: () => vo
           className="h-9"
         />
       </label>
+
+      <div className="grid grid-cols-2 gap-2">
+        <div className="flex min-w-0 flex-col gap-1.5">
+          <span className="text-muted-foreground">Project</span>
+          <ProjectPicker variant="field" value={values.projectId} onChange={(id) => set("projectId", id)} />
+        </div>
+        <div className="flex min-w-0 flex-col gap-1.5">
+          <span className="text-muted-foreground">Tags</span>
+          <TagPicker variant="field" value={values.tagIds} onChange={(ids) => set("tagIds", ids)} />
+        </div>
+      </div>
 
       <div className="grid grid-cols-[1fr_auto_auto] gap-2">
         <label className="flex flex-col gap-1.5">

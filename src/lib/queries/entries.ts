@@ -14,8 +14,15 @@ import { createClient } from "@/lib/supabase/client";
 import type { Tables, TablesInsert, TablesUpdate } from "@/lib/supabase/database.types";
 import { addDaysToKey, dayKey, wallTimeToInstant } from "@/lib/time";
 
-export type Entry = Tables<"time_entries">;
-export type EntryFields = Pick<Entry, "description" | "project_id" | "billable">;
+/** An entry with the ids of its tags. */
+export type Entry = Tables<"time_entries"> & { time_entry_tags: { tag_id: string }[] };
+export type EntryFields = Pick<Entry, "description" | "project_id" | "billable"> & { tag_ids: string[] };
+
+/** Every entry read and write returns this shape. */
+const ENTRY_SELECT = "*, time_entry_tags(tag_id)";
+
+export const tagIdsOf = (entry: Pick<Entry, "time_entry_tags">) => entry.time_entry_tags.map((t) => t.tag_id);
+const tagRows = (ids: string[] | undefined) => (ids ?? []).map((tag_id) => ({ tag_id }));
 
 /** Days of history per page of the entry list. */
 const PAGE_DAYS = 7;
@@ -35,6 +42,7 @@ export function entryErrorMessage(error: unknown): string {
   if (e?.code === "23P01") return "This entry overlaps another one. Change its start or end time.";
   if (e?.code === "23514") return "The end time must be after the start time.";
   if (e?.code === "23505") return "A timer is already running. Stop it first.";
+  if (e?.code === "23503") return "That project or tag no longer exists. Pick another one.";
   return "Something went wrong saving your entry. Try again.";
 }
 
@@ -47,7 +55,7 @@ export function useRunningEntry() {
     queryFn: async () => {
       const { data, error } = await createClient()
         .from("time_entries")
-        .select("*")
+        .select(ENTRY_SELECT)
         .is("stop_at", null)
         .maybeSingle();
       if (error) throw error;
@@ -74,7 +82,7 @@ export function useEntryPages(timeZone: string) {
       const [page, older] = await Promise.all([
         supabase
           .from("time_entries")
-          .select("*")
+          .select(ENTRY_SELECT)
           .not("stop_at", "is", null)
           .gte("start_at", from)
           .lt("start_at", to)
@@ -89,23 +97,38 @@ export function useEntryPages(timeZone: string) {
   });
 }
 
-/** Keeps entries in sync with other tabs and devices through Supabase Realtime. */
-export function useEntriesRealtime() {
+/** Which cached queries each table's changes affect. */
+const REALTIME_TABLES = {
+  time_entries: [["entries"]],
+  time_entry_tags: [["entries"]],
+  projects: [["projects"]],
+  clients: [["clients"]],
+  tags: [["tags"]],
+} as const;
+
+/** Keeps entries, projects, clients and tags in sync with other tabs and devices. */
+export function useRealtimeSync() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
     const supabase = createClient();
+    const pending = new Set<string>();
     let timeout: number | undefined;
     // Several events often arrive together (start = stop old + insert new); refetch once.
-    const refresh = () => {
+    const refresh = (table: keyof typeof REALTIME_TABLES) => {
+      REALTIME_TABLES[table].forEach((key) => pending.add(JSON.stringify(key)));
       window.clearTimeout(timeout);
-      timeout = window.setTimeout(() => queryClient.invalidateQueries({ queryKey: entryKeys.all }), 150);
+      timeout = window.setTimeout(() => {
+        pending.forEach((key) => queryClient.invalidateQueries({ queryKey: JSON.parse(key) }));
+        pending.clear();
+      }, 150);
     };
 
-    const channel = supabase
-      .channel("time_entries")
-      .on("postgres_changes", { event: "*", schema: "public", table: "time_entries" }, refresh)
-      .subscribe();
+    let channel = supabase.channel("sync");
+    for (const table of Object.keys(REALTIME_TABLES) as (keyof typeof REALTIME_TABLES)[]) {
+      channel = channel.on("postgres_changes", { event: "*", schema: "public", table }, () => refresh(table));
+    }
+    channel.subscribe();
 
     return () => {
       window.clearTimeout(timeout);
@@ -140,10 +163,13 @@ const tempEntry = (fields: Partial<Entry>): Entry => ({
   billable: false,
   start_at: new Date().toISOString(),
   stop_at: null,
+  time_entry_tags: [],
   ...fields,
 });
 
 /* ---------- Writes ---------- */
+
+type EntryUpdate = { id: string; changes: TablesUpdate<"time_entries">; tagIds?: string[] };
 
 /** All entry writes, with instant (optimistic) updates that roll back on error. */
 export function useEntryActions() {
@@ -156,16 +182,18 @@ export function useEntryActions() {
         p_description: fields.description ?? "",
         p_project_id: fields.project_id ?? undefined,
         p_billable: fields.billable ?? false,
+        p_tag_ids: fields.tag_ids ?? [],
       });
       if (error) throw error;
-      return data;
+      return { ...data, time_entry_tags: tagRows(fields.tag_ids) } satisfies Entry;
     },
     onMutate: async (fields) => {
       const saved = await snapshot(client);
       const previous = client.getQueryData<Entry | null>(entryKeys.running);
       const nowIso = new Date().toISOString();
       if (previous) patchListed(client, (list) => [{ ...previous, stop_at: nowIso }, ...list]);
-      client.setQueryData(entryKeys.running, tempEntry({ ...fields, start_at: nowIso }));
+      const { tag_ids, ...rest } = fields;
+      client.setQueryData(entryKeys.running, tempEntry({ ...rest, time_entry_tags: tagRows(tag_ids), start_at: nowIso }));
       return { saved };
     },
     onError: (_e, _v, ctx) => restore(client, ctx?.saved),
@@ -194,15 +222,23 @@ export function useEntryActions() {
   });
 
   const update = useMutation({
-    mutationFn: async ({ id, changes }: { id: string; changes: TablesUpdate<"time_entries"> }) => {
-      const { data, error } = await createClient().from("time_entries").update(changes).eq("id", id).select().single();
-      if (error) throw error;
-      return data;
+    mutationFn: async ({ id, changes, tagIds }: EntryUpdate) => {
+      const supabase = createClient();
+      if (Object.keys(changes).length > 0) {
+        const { error } = await supabase.from("time_entries").update(changes).eq("id", id);
+        if (error) throw error;
+      }
+      if (tagIds) {
+        const { error } = await supabase.rpc("set_entry_tags", { p_entry_id: id, p_tag_ids: tagIds });
+        if (error) throw error;
+      }
     },
-    onMutate: async ({ id, changes }) => {
+    onMutate: async ({ id, changes, tagIds }) => {
       const saved = await snapshot(client);
-      client.setQueryData<Entry | null>(entryKeys.running, (r) => (r?.id === id ? { ...r, ...changes } : r));
-      patchListed(client, (list) => list.map((e) => (e.id === id ? { ...e, ...changes } : e)));
+      const apply = (e: Entry): Entry =>
+        e.id === id ? { ...e, ...changes, ...(tagIds ? { time_entry_tags: tagRows(tagIds) } : {}) } : e;
+      client.setQueryData<Entry | null>(entryKeys.running, (r) => (r ? apply(r) : r));
+      patchListed(client, (list) => list.map(apply));
       return { saved };
     },
     onError: (_e, _v, ctx) => restore(client, ctx?.saved),
@@ -210,14 +246,19 @@ export function useEntryActions() {
   });
 
   const create = useMutation({
-    mutationFn: async (entry: TablesInsert<"time_entries">) => {
-      const { data, error } = await createClient().from("time_entries").insert(entry).select().single();
+    mutationFn: async ({ tagIds, ...entry }: TablesInsert<"time_entries"> & { tagIds?: string[] }) => {
+      const supabase = createClient();
+      const { data, error } = await supabase.from("time_entries").insert(entry).select("id").single();
       if (error) throw error;
+      if (tagIds?.length) {
+        const tags = await supabase.rpc("set_entry_tags", { p_entry_id: data.id, p_tag_ids: tagIds });
+        if (tags.error) throw tags.error;
+      }
       return data;
     },
-    onMutate: async (entry) => {
+    onMutate: async ({ tagIds, ...entry }) => {
       const saved = await snapshot(client);
-      if (entry.stop_at) patchListed(client, (list) => [tempEntry(entry), ...list]);
+      if (entry.stop_at) patchListed(client, (list) => [tempEntry({ ...entry, time_entry_tags: tagRows(tagIds) }), ...list]);
       return { saved };
     },
     onError: (_e, _v, ctx) => restore(client, ctx?.saved),
