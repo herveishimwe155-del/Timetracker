@@ -2,6 +2,7 @@
 
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import type { AuthError } from "@supabase/supabase-js";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { ensureProfile } from "./profile";
@@ -39,6 +40,30 @@ function readForm(formData: FormData) {
   };
 }
 
+/** Plain-language messages for Supabase auth errors; unknown ones are logged. */
+function authErrorMessage(error: AuthError, fallback: string): string {
+  switch (error.code) {
+    case "email_not_confirmed":
+      return "Confirm your email first. Check your inbox (and spam) for the link.";
+    case "invalid_credentials":
+      return "Email or password is incorrect.";
+    case "user_already_exists":
+    case "email_exists":
+      return "An account with this email already exists. Sign in instead.";
+    case "weak_password":
+      return "Choose a stronger password.";
+    case "over_email_send_rate_limit":
+      return "We just sent you an email. Check your inbox (and spam), or wait a minute before trying again.";
+    case "over_request_rate_limit":
+      return "Too many attempts. Wait a minute and try again.";
+    case "signup_disabled":
+      return "New sign-ups are turned off right now.";
+  }
+  if (error.status === 429) return "Too many attempts. Wait a minute and try again.";
+  console.error("Supabase auth error", error.code, error.status, error.message);
+  return fallback;
+}
+
 export async function signIn(_prev: AuthState, formData: FormData): Promise<AuthState> {
   const { parsed, email, next, timeZone } = readForm(formData);
   if (!parsed.success) return invalid(parsed.error, email);
@@ -46,11 +71,7 @@ export async function signIn(_prev: AuthState, formData: FormData): Promise<Auth
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
   if (error) {
-    const message =
-      error.code === "email_not_confirmed"
-        ? "Confirm your email first. Check your inbox for the link."
-        : "Email or password is incorrect.";
-    return { error: message, email };
+    return { error: authErrorMessage(error, "Could not sign you in. Try again."), email };
   }
 
   await ensureProfile(supabase, data.user, timeZone);
@@ -72,13 +93,7 @@ export async function signUp(_prev: AuthState, formData: FormData): Promise<Auth
     options: { emailRedirectTo: callback.toString() },
   });
   if (error) {
-    const message =
-      error.code === "user_already_exists"
-        ? "An account with this email already exists. Sign in instead."
-        : error.code === "weak_password"
-          ? "Choose a stronger password."
-          : "Could not create your account. Try again.";
-    return { error: message, email };
+    return { error: authErrorMessage(error, "Could not create your account. Try again."), email };
   }
 
   // Email confirmation off: signed in straight away.

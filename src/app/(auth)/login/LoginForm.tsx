@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState, useSyncExternalStore } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, MailCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,12 +59,34 @@ export function LoginForm({ next, linkError }: { next: string; linkError: boolea
     }
   }
 
+  const brand = (
+    <div className="mb-6 flex items-center gap-2">
+      <span aria-hidden className="size-2.5 rounded-full bg-brand" />
+      <span className="font-medium tracking-tight">Time Tracker</span>
+    </div>
+  );
+
+  // After sign-up, replace the form so there's nothing to click twice.
+  if (mode === "sign-up" && signUpState.notice) {
+    return (
+      <div className="w-full max-w-sm rounded-md bg-surface p-6 shadow-sm">
+        {brand}
+        <MailCheck className="size-5 text-brand" strokeWidth={1.75} aria-hidden />
+        <h1 className="mt-3 text-lg font-medium tracking-tight">Check your email</h1>
+        <p className="mt-1 text-muted-foreground" role="status">
+          We sent a confirmation link to <span className="text-foreground">{signUpState.email}</span>. Open it to
+          finish creating your account, then sign in. It can take a minute; check spam too.
+        </p>
+        <Button type="button" className="mt-6 h-9 w-full" onClick={() => setMode("sign-in")}>
+          Go to sign in
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full max-w-sm rounded-md bg-surface p-6 shadow-sm">
-      <div className="mb-6 flex items-center gap-2">
-        <span aria-hidden className="size-2.5 rounded-full bg-brand" />
-        <span className="font-medium tracking-tight">Time Tracker</span>
-      </div>
+      {brand}
 
       <h1 className="text-lg font-medium tracking-tight">
         {mode === "sign-in" ? "Sign in" : "Create your account"}
