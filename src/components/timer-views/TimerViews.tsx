@@ -163,7 +163,7 @@ export function TimerViews() {
                 onClick={() => setParams({ view: v })}
                 className={cn(
                   "rounded-sm px-3 py-1 text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring",
-                  view === v && "bg-brand/15 text-brand shadow-[inset_0_0_0_1px_var(--brand)]",
+                  view === v && "bg-brand/10 text-brand shadow-[inset_0_0_0_1px_var(--brand)]",
                 )}
               >
                 {VIEW_LABELS[v]}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { displayColor } from "@/lib/project-colors";
 import { useClients, useProjects } from "@/lib/queries/catalog";
 import { useSettings } from "@/lib/queries/profile";
 import { buildReport, NO_FILTERS, type DayRange, type ReportEntry } from "@/lib/reports";
@@ -50,7 +51,7 @@ export function ProjectSummaryBar({
                 {formatDuration(Math.floor(p.ms / 1000), durationFormat)}, {Math.round(p.share * 100)}%
               </span>
             </span>
-            <span aria-hidden className="block h-1 rounded-full" style={{ backgroundColor: p.color }} />
+            <span aria-hidden className="block h-1 rounded-full" style={{ backgroundColor: displayColor(p.color) }} />
           </li>
         ))}
       </ul>

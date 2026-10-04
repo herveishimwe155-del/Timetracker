@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut, Play, Plus, Square } from "lucide-react";
+import { LogOut, Moon, Play, Plus, Square, Sun } from "lucide-react";
 import {
   Command,
   CommandEmpty,
@@ -17,6 +17,7 @@ import { footerNav, mainNav } from "@/components/shell/nav";
 import { signOut } from "@/lib/auth/actions";
 import { tagIdsOf, useEntryPages, type Entry } from "@/lib/queries/entries";
 import { useSettings } from "@/lib/queries/profile";
+import { useResolvedTheme, useThemePreference } from "@/lib/theme";
 import { useAppCommands } from "./AppCommands";
 
 type Props = { open: boolean; onOpenChange: (open: boolean) => void; running: Entry | null };
@@ -26,6 +27,8 @@ export function CommandPalette({ open, onOpenChange, running }: Props) {
   const commands = useAppCommands();
   const { timeZone } = useSettings();
   const { data } = useEntryPages(timeZone);
+  const theme = useResolvedTheme();
+  const [, setTheme] = useThemePreference();
 
   // Up to five recent, distinct descriptions to continue with one keystroke.
   const recent = useMemo(() => {
@@ -108,6 +111,13 @@ export function CommandPalette({ open, onOpenChange, running }: Props) {
                 </CommandItem>
               ))}
             </CommandGroup>
+            <CommandGroup heading="Appearance">
+              <CommandItem onSelect={() => run(() => setTheme(theme === "dark" ? "light" : "dark"))}>
+                {theme === "dark" ? <Sun /> : <Moon />}
+                Switch to {theme === "dark" ? "light" : "dark"} mode
+              </CommandItem>
+            </CommandGroup>
+
             <CommandGroup heading="Account">
               <CommandItem onSelect={() => run(() => void signOut())}>
                 <LogOut />

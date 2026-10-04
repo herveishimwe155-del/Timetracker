@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useAppCommands } from "@/components/command/AppCommands";
 import { useCatalogMaps } from "@/lib/queries/catalog";
 import type { Entry } from "@/lib/queries/entries";
+import { displayColor } from "@/lib/project-colors";
 import { NO_PROJECT_COLOR, splitByDay } from "@/lib/reports";
 import { addDaysToKey, formatDuration, shortDayLabel, timeOfDay, wallTimeToInstant, weekdayOfKey, type DurationFormat } from "@/lib/time";
 import { layoutDay, minutesToTime, snapMinutes } from "@/lib/views";
@@ -159,7 +160,7 @@ export function CalendarView({ days, entries, today, timeZone, nowMs, durationFo
               >
                 {blocks.map(({ entry, startMin, endMin, running }) => {
                   const project = entry.project_id ? catalog.projects.get(entry.project_id) : undefined;
-                  const color = project?.color ?? NO_PROJECT_COLOR;
+                  const color = displayColor(project?.color ?? NO_PROJECT_COLOR);
                   const height = Math.max(((endMin - startMin) / 60) * hour, MIN_BLOCK);
                   const seconds = Math.floor((endMin - startMin) * 60);
                   const range = `${timeOfDay(entry.start_at, timeZone)}–${entry.stop_at ? timeOfDay(entry.stop_at, timeZone) : "now"}`;

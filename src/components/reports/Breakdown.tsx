@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { ProjectDot } from "@/components/projects/ProjectDot";
+import { displayColor } from "@/lib/project-colors";
 import { NO_PROJECT_COLOR, type Report } from "@/lib/reports";
 import { formatDuration, type DurationFormat } from "@/lib/time";
 
@@ -85,7 +86,7 @@ export function Breakdown({ report, format }: { report: Report; format: Duration
                 </div>
                 {/* Share bar: a thin track, filled to the share, coloured by the entity. */}
                 <div className="mt-1.5 h-1 w-full rounded-full bg-surface-2" aria-hidden>
-                  <div className="h-1 rounded-full" style={{ width: `${row.share * 100}%`, backgroundColor: row.color }} />
+                  <div className="h-1 rounded-full" style={{ width: `${row.share * 100}%`, backgroundColor: displayColor(row.color) }} />
                 </div>
               </th>
               <td className="tabular py-2 pl-4 text-right align-top whitespace-nowrap">{formatDuration(Math.floor(row.ms / 1000), format)}</td>

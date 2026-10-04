@@ -134,7 +134,8 @@ export type Report = {
   clients: { id: string | null; name: string; ms: number; share: number }[];
 };
 
-export const NO_PROJECT_COLOR = "#52525B"; // zinc-600
+/** Neutral grey for "No project", per theme (see --no-project in globals.css). */
+export const NO_PROJECT_COLOR = "var(--no-project)";
 
 export function buildReport(input: {
   entries: ReportEntry[];
