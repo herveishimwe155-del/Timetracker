@@ -47,3 +47,33 @@ export function useLocalStorageFlag(key: string, fallback: boolean) {
 
   return [value, setValue] as const;
 }
+
+/** A small whole number kept in localStorage (e.g. a zoom level), clamped to [min, max]. */
+export function useLocalStorageNumber(key: string, fallback: number, min: number, max: number) {
+  const value = useSyncExternalStore(
+    subscribe,
+    () => {
+      try {
+        const n = Number(window.localStorage.getItem(key));
+        return Number.isInteger(n) && n >= min && n <= max && window.localStorage.getItem(key) !== null ? n : fallback;
+      } catch {
+        return fallback;
+      }
+    },
+    () => fallback,
+  );
+
+  const setValue = useCallback(
+    (next: number) => {
+      try {
+        window.localStorage.setItem(key, String(Math.min(max, Math.max(min, next))));
+      } catch {
+        // Storage blocked: the value simply won't persist.
+      }
+      listeners.forEach((listener) => listener());
+    },
+    [key, min, max],
+  );
+
+  return [value, setValue] as const;
+}
