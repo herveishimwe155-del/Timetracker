@@ -1,26 +1,167 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Monolith design tokens.
+ * The app is dark only, so :root holds the final values.
+ * shadcn/ui reads its own names (--background, --primary, --accent...), which are
+ * mapped onto the Monolith palette below. Note: shadcn's --accent is the subtle
+ * hover fill; the Monolith emerald accent is --brand (Tailwind: bg-brand, text-brand).
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: dark;
+
+  /* Monolith palette */
+  --bg: #09090b; /* zinc-950, Deep Obsidian */
+  --surface: #18181b; /* zinc-900, cards, sidebar, menus */
+  --surface-2: #27272a; /* zinc-800, hover and selected fills */
+  --line: #27272a; /* zinc-800, every 1px border */
+  --text: #fafafa; /* zinc-50 */
+  --text-muted: #a1a1aa; /* zinc-400 */
+  --brand: #10b981; /* emerald-500, running timer, active, primary */
+  --brand-2: #22d3ee; /* cyan-400, charts and secondary highlights */
+  --danger: #ef4444; /* red-500 */
+  --radius: 4px;
+
+  /* shadcn/ui names mapped to Monolith */
+  --background: var(--bg);
+  --foreground: var(--text);
+  --card: var(--surface);
+  --card-foreground: var(--text);
+  --popover: var(--surface);
+  --popover-foreground: var(--text);
+  --primary: var(--brand);
+  --primary-foreground: var(--bg);
+  --secondary: var(--surface-2);
+  --secondary-foreground: var(--text);
+  --muted: var(--surface);
+  --muted-foreground: var(--text-muted);
+  --accent: var(--surface-2);
+  --accent-foreground: var(--text);
+  --destructive: var(--danger);
+  --border: var(--line);
+  --input: var(--line);
+  --ring: var(--brand);
+  --chart-1: var(--brand);
+  --chart-2: var(--brand-2);
+  --chart-3: #71717a; /* zinc-500 */
+  --chart-4: #52525b; /* zinc-600 */
+  --chart-5: #3f3f46; /* zinc-700 */
+  --sidebar: var(--bg);
+  --sidebar-foreground: var(--text);
+  --sidebar-primary: var(--brand);
+  --sidebar-primary-foreground: var(--bg);
+  --sidebar-accent: var(--surface);
+  --sidebar-accent-foreground: var(--text);
+  --sidebar-border: var(--line);
+  --sidebar-ring: var(--brand);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --font-mono: var(--font-jetbrains-mono);
+  --font-heading: var(--font-geist-sans);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  /* Monolith utilities: bg-surface, border-line, text-brand, text-brand-2... */
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-brand: var(--brand);
+  --color-brand-2: var(--brand-2);
+  --color-danger: var(--danger);
+
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+
+  /* 4px radius on everything (rounded-full is untouched) */
+  --radius-xs: var(--radius);
+  --radius-sm: var(--radius);
+  --radius-md: var(--radius);
+  --radius-lg: var(--radius);
+  --radius-xl: var(--radius);
+  --radius-2xl: var(--radius);
+  --radius-3xl: var(--radius);
+  --radius-4xl: var(--radius);
+
+  /* No drop shadows: every elevation is a 1px inner border */
+  --shadow-2xs: inset 0 0 0 1px var(--line);
+  --shadow-xs: inset 0 0 0 1px var(--line);
+  --shadow-sm: inset 0 0 0 1px var(--line);
+  --shadow-md: inset 0 0 0 1px var(--line);
+  --shadow-lg: inset 0 0 0 1px var(--line);
+  --shadow-xl: inset 0 0 0 1px var(--line);
+  --shadow-2xl: inset 0 0 0 1px var(--line);
+
+  /* 120-150 ms, no bounce */
+  --default-transition-duration: 140ms;
+  --default-transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Soft emerald glow on the running timer's start/stop button */
+  --animate-glow: glow 2s ease-in-out infinite;
+  @keyframes glow {
+    0%,
+    100% {
+      box-shadow: 0 0 0 1px var(--brand), 0 0 8px 0 color-mix(in oklab, var(--brand) 35%, transparent);
+    }
+    50% {
+      box-shadow: 0 0 0 1px var(--brand), 0 0 16px 2px color-mix(in oklab, var(--brand) 50%, transparent);
+    }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-size: 14px; /* high-density base; rem stays 16px so the 8px grid holds */
+  }
+  ::selection {
+    background: color-mix(in oklab, var(--brand) 35%, transparent);
+  }
+}
+
+@layer utilities {
+  /* Mono, fixed-width digits so durations and the clock never jitter */
+  .tabular {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1, "zero" 1;
+  }
 }
