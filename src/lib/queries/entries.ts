@@ -12,6 +12,7 @@ import {
 import type { PostgrestError } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import type { Tables, TablesInsert, TablesUpdate } from "@/lib/supabase/database.types";
+import { track } from "@/lib/analytics";
 import { addDaysToKey, dayKey, wallTimeToInstant } from "@/lib/time";
 
 /** An entry with the ids of its tags. */
@@ -197,7 +198,10 @@ export function useEntryActions() {
       return { saved };
     },
     onError: (_e, _v, ctx) => restore(client, ctx?.saved),
-    onSuccess: (entry) => client.setQueryData(entryKeys.running, entry),
+    onSuccess: (entry) => {
+      client.setQueryData(entryKeys.running, entry);
+      track("timer_started", { has_project: entry.project_id !== null, tags: entry.time_entry_tags.length });
+    },
     onSettled: settle,
   });
 
@@ -218,6 +222,7 @@ export function useEntryActions() {
       return { saved };
     },
     onError: (_e, _v, ctx) => restore(client, ctx?.saved),
+    onSuccess: () => track("timer_stopped"),
     onSettled: settle,
   });
 
@@ -242,6 +247,7 @@ export function useEntryActions() {
       return { saved };
     },
     onError: (_e, _v, ctx) => restore(client, ctx?.saved),
+    onSuccess: () => track("entry_updated"),
     onSettled: settle,
   });
 
@@ -262,6 +268,7 @@ export function useEntryActions() {
       return { saved };
     },
     onError: (_e, _v, ctx) => restore(client, ctx?.saved),
+    onSuccess: () => track("entry_created"),
     onSettled: settle,
   });
 
@@ -278,6 +285,7 @@ export function useEntryActions() {
       return { saved };
     },
     onError: (_e, _v, ctx) => restore(client, ctx?.saved),
+    onSuccess: () => track("entry_deleted"),
     onSettled: settle,
   });
 

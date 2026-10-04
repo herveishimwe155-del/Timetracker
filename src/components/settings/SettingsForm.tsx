@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/ui/native-select";
 import { useSaveSettings, useSettings, type Settings } from "@/lib/queries/profile";
+import { track } from "@/lib/analytics";
 import { safeTimeZone } from "@/lib/auth/redirect";
 import { formatDuration, type DurationFormat } from "@/lib/time";
 
@@ -49,7 +50,10 @@ function Form({ saved }: { saved: Settings }) {
     event.preventDefault();
     if (safeTimeZone(values.timeZone) !== values.timeZone) return toast.error("Pick a time zone from the list.");
     save.mutate(values, {
-      onSuccess: () => toast.success("Settings saved"),
+      onSuccess: () => {
+        toast.success("Settings saved");
+        track("settings_saved", { duration_format: values.durationFormat, week_start: values.weekStart });
+      },
       onError: () => toast.error("Your settings couldn't be saved. Try again."),
     });
   };

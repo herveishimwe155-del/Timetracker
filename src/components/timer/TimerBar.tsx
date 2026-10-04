@@ -33,8 +33,9 @@ export function TimerBar() {
   const projectId = running ? running.project_id : draft.projectId;
   const tagIds = running ? tagIdsOf(running) : draft.tagIds;
 
+  // One row from 640px; on phones the description gets its own row above the controls.
   return (
-    <div className="sticky top-0 z-10 flex h-12 items-center gap-2 border-b border-line bg-background/95 px-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 md:px-4">
+    <div role="region" aria-label="Current timer" className="sticky top-0 z-10 flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-line bg-background/95 px-3 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:h-12 sm:flex-nowrap sm:py-0 md:px-4">
       <DescriptionInput
         initial={running?.description ?? ""}
         running={running !== null}
@@ -68,7 +69,7 @@ export function TimerBar() {
         <TooltipContent>{billable ? "Billable" : "Not billable"}</TooltipContent>
       </Tooltip>
 
-      <TimerDigits seconds={elapsed} size="lg" running={running !== null} className="w-[8ch] text-right" />
+      <TimerDigits seconds={elapsed} size="lg" running={running !== null} className="ml-auto w-[8ch] text-right sm:ml-0" />
 
       <Tooltip>
         <TooltipTrigger asChild>
@@ -80,7 +81,7 @@ export function TimerBar() {
             }}
             aria-label={running ? "Stop timer" : "Start timer"}
             aria-keyshortcuts="S"
-            className={cn("size-8 rounded-full", running && "animate-glow")}
+            className={cn("size-8 rounded-full", running && "animate-glow motion-reduce:animate-none")}
           >
             {running ? <Square className="fill-current" /> : <Play className="fill-current" />}
           </Button>
@@ -144,7 +145,7 @@ function DescriptionInput({
           e.currentTarget.blur();
         }
       }}
-      className="h-8 min-w-0 flex-1 border-transparent bg-transparent shadow-none dark:bg-transparent focus-visible:border-line"
+      className="h-8 min-w-0 flex-1 basis-full border-transparent bg-transparent shadow-none dark:bg-transparent focus-visible:border-line sm:basis-auto"
     />
   );
 }
