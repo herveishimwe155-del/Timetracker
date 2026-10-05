@@ -5,6 +5,7 @@ import { Download, KeyRound, Loader2, LogOut, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { changePassword, deleteAccount, signOutEverywhere, type AccountState } from "@/lib/auth/actions";
+import { TwoFactorSettings } from "./TwoFactorSettings";
 
 /** Email, password and sign-in sessions. */
 export function SecuritySettings({ email }: { email: string | null }) {
@@ -51,6 +52,8 @@ export function SecuritySettings({ email }: { email: string | null }) {
           )}
         </div>
       </form>
+
+      <TwoFactorSettings />
 
       <form action={signOutEverywhere} className="flex flex-col items-start gap-2">
         <span className="font-medium">Sessions</span>
