@@ -195,6 +195,7 @@ export type Database = {
         Returns: { project_id: string; tracked_seconds: number; last_tracked_at: string; entry_count: number }[];
       };
       server_now: { Args: never; Returns: string };
+      session_assurance_ok: { Args: never; Returns: boolean };
       set_entry_tags: {
         Args: { p_entry_id: string; p_tag_ids: string[] };
         Returns: undefined;

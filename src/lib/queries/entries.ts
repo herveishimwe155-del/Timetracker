@@ -155,15 +155,29 @@ export function useRealtimeSync() {
       }, 150);
     };
 
-    let channel = supabase.channel("sync");
-    for (const table of Object.keys(REALTIME_TABLES) as (keyof typeof REALTIME_TABLES)[]) {
-      channel = channel.on("postgres_changes", { event: "*", schema: "public", table }, () => refresh(table));
-    }
-    channel.subscribe();
+    // A database trigger broadcasts { table } to the private topic "user:<id>";
+    // only that user may join it (RLS on realtime.messages).
+    let channel: ReturnType<typeof supabase.channel> | undefined;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.auth.getClaims();
+      const userId = data?.claims.sub;
+      if (!userId || cancelled) return;
+      await supabase.realtime.setAuth();
+      if (cancelled) return;
+      channel = supabase
+        .channel(`user:${userId}`, { config: { private: true } })
+        .on("broadcast", { event: "change" }, ({ payload }) => {
+          const table = payload?.table as string | undefined;
+          if (table && table in REALTIME_TABLES) refresh(table as keyof typeof REALTIME_TABLES);
+        })
+        .subscribe();
+    })();
 
     return () => {
+      cancelled = true;
       window.clearTimeout(timeout);
-      supabase.removeChannel(channel);
+      if (channel) supabase.removeChannel(channel);
     };
   }, [queryClient]);
 }

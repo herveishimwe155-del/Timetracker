@@ -12,6 +12,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   if (!data?.claims.sub) redirect("/login");
+  // With two-step verification on, a password-only session must enter a code first.
+  // (The database enforces this too; this just sends the user to the right page.)
+  if (data.claims.aal !== "aal2") {
+    const { data: ok } = await supabase.rpc("session_assurance_ok");
+    if (ok === false) redirect("/verify");
+  }
 
   return (
     <MonitoringProvider userId={data.claims.sub}>
