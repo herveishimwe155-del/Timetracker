@@ -37,6 +37,10 @@ export default function PrivacyPage() {
           app.
         </li>
         <li>
+          <strong>Payments:</strong> if you subscribe, your plan, renewal date and a record of each payment (amount,
+          date, transaction number). Card details go straight to Flutterwave; we never see or store them.
+        </li>
+        <li>
           <strong>Technical logs:</strong> our hosting providers record requests (such as IP address, browser and time)
           to run the service and keep it secure. These logs are kept for a short time.
         </li>
@@ -57,6 +61,9 @@ export default function PrivacyPage() {
         </li>
         <li>
           <strong>Vercel</strong> runs the app, in Paris (EU), and delivers pages through its worldwide network.
+        </li>
+        <li>
+          <strong>Flutterwave</strong> processes subscription payments, only if you subscribe.
         </li>
         <li>
           <strong>Google</strong>, only if you choose &ldquo;Continue with Google&rdquo;.
@@ -87,7 +94,7 @@ export default function PrivacyPage() {
 
       <h2>How long we keep it</h2>
       <p>
-        As long as you have an account. When you delete your account, your data is removed from our database straight
+        As long as you have an account. Payment records may be kept longer where tax or accounting law requires it. When you delete your account, your data is removed from our database straight
         away. Copies in our providers&apos; backups disappear when those backups expire, normally within 7 days.
       </p>
 

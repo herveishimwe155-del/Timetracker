@@ -30,6 +30,27 @@ export default function TermsPage() {
         <Link href="/privacy">privacy policy</Link>. You can export or delete it at any time from Settings.
       </p>
 
+      <h2>Plans and payment</h2>
+      <ul>
+        <li>
+          Tickr is free for up to 10 active projects. Standard removes that limit; current prices are on the{" "}
+          <Link href="/pricing">pricing page</Link>.
+        </li>
+        <li>
+          Standard is paid by card through Flutterwave and renews automatically each month or year until you turn
+          renewal off in Settings. You keep Standard until the end of the period you&apos;ve paid for.
+        </li>
+        <li>
+          Payments aren&apos;t refunded for partly used periods, except where the law gives you that right. If something
+          went wrong with a payment, write to {mail}.
+        </li>
+        <li>
+          If a renewal fails or you stop paying, your account moves to Free. Nothing is deleted; you just can&apos;t add
+          projects beyond the Free limit until you archive some or upgrade again.
+        </li>
+        <li>We&apos;ll tell you at least 30 days before a price change applies to you.</li>
+      </ul>
+
       <h2>Fair use</h2>
       <p>Don&apos;t use Tickr to:</p>
       <ul>
@@ -40,7 +61,7 @@ export default function TermsPage() {
 
       <h2>The service</h2>
       <p>
-        Tickr is free and provided &ldquo;as is&rdquo;. We work to keep it available and your data safe, but we
+        Tickr is provided &ldquo;as is&rdquo;. We work to keep it available and your data safe, but we
         can&apos;t promise it will always be available or free of errors. Keep your own exports of anything you
         can&apos;t afford to lose, such as hours you bill to clients. We may change or add features, and we&apos;ll give
         reasonable notice before removing important ones or ending the service, so you can export your data.

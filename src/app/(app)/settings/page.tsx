@@ -5,6 +5,8 @@ import { DangerZone, DataSettings, SecuritySettings, ShortcutsList } from "@/com
 import { SettingsForm } from "@/components/settings/SettingsForm";
 import { ThemeSettings } from "@/components/settings/ThemeSettings";
 import { createClient } from "@/lib/supabase/server";
+import { BillingSettings } from "@/components/settings/BillingSettings";
+import { billingConfigured } from "@/lib/billing/flutterwave";
 
 export const metadata: Metadata = { title: "Settings" };
 
@@ -12,12 +14,15 @@ const SECTIONS = [
   { id: "appearance", title: "Appearance" },
   { id: "preferences", title: "Profile and preferences" },
   { id: "security", title: "Account and security" },
+  { id: "billing", title: "Plan and billing" },
   { id: "data", title: "Your data" },
   { id: "shortcuts", title: "Keyboard shortcuts" },
   { id: "danger", title: "Danger zone" },
 ] as const;
 
-export default async function SettingsPage() {
+export default async function SettingsPage({ searchParams }: PageProps<"/settings">) {
+  const billing = (await searchParams).billing;
+  const result = billing === "success" || billing === "failed" || billing === "cancelled" ? billing : undefined;
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   const email = typeof data?.claims.email === "string" ? data.claims.email : null;
@@ -26,6 +31,7 @@ export default async function SettingsPage() {
     appearance: <ThemeSettings />,
     preferences: <SettingsForm />,
     security: <SecuritySettings email={email} />,
+    billing: <BillingSettings configured={billingConfigured()} result={result} />,
     data: <DataSettings />,
     shortcuts: <ShortcutsList />,
     danger: <DangerZone />,

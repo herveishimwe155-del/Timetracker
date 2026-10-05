@@ -26,6 +26,37 @@ export type Database = {
         Update: { archived?: boolean; created_at?: string; id?: string; name?: string; user_id?: string };
         Relationships: [];
       };
+      billing_payments: {
+        Row: {
+          amount: number;
+          billing_interval: string;
+          currency: string;
+          paid_at: string;
+          transaction_id: number;
+          user_id: string | null;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      subscriptions: {
+        Row: {
+          billing_interval: string;
+          created_at: string;
+          current_period_end: string;
+          customer_email: string;
+          plan: string;
+          status: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: never;
+        Update: {
+          status?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       goals: {
         Row: {
           comparison: string;
@@ -189,6 +220,18 @@ export type Database = {
     };
     Views: { [_ in never]: never };
     Functions: {
+      apply_payment: {
+        Args: {
+          p_transaction_id: number;
+          p_user_id: string;
+          p_email: string;
+          p_interval: string;
+          p_amount: number;
+          p_currency: string;
+        };
+        Returns: string;
+      };
+      current_plan: { Args: never; Returns: string };
       delete_my_account: { Args: never; Returns: undefined };
       project_stats: {
         Args: never;
