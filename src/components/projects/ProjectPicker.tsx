@@ -16,6 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { nextProjectColor } from "@/lib/project-colors";
 import { useClients, useProjectActions, useProjects, type Project } from "@/lib/queries/catalog";
 import { ProjectDot } from "./ProjectDot";
+import { useRequireAccount } from "@/lib/guest";
 
 type Props = {
   value: string | null;
@@ -31,6 +32,7 @@ type Props = {
 export function ProjectPicker({ value, onChange, variant = "compact", disabled, triggerLabel }: Props) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const requireAccount = useRequireAccount();
   const { data: projects = [] } = useProjects();
   const { data: clients = [] } = useClients();
   const { create } = useProjectActions();
@@ -63,6 +65,7 @@ export function ProjectPicker({ value, onChange, variant = "compact", disabled, 
   };
 
   const createProject = () => {
+    if (requireAccount()) return;
     create.mutate(
       { name: trimmed, color: nextProjectColor(projects.map((p) => p.color)) },
       { onSuccess: (project) => choose(project.id) },

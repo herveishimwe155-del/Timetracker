@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import type { DurationFormat } from "@/lib/time";
+import { guestQuery, useIsGuest } from "@/lib/guest";
 
 export type TimeFormat = "12h" | "24h";
 export type Settings = {
@@ -17,7 +18,9 @@ const browserTimeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone |
 const DURATION_FORMATS: DurationFormat[] = ["clock", "decimal", "classic"];
 
 function useProfile() {
+  const guest = useIsGuest();
   return useQuery({
+    ...guestQuery(guest, null),
     queryKey: ["profile"],
     queryFn: async () => {
       const { data, error } = await createClient()

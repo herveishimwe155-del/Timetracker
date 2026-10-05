@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import type { BillingInterval, PlanId } from "@/lib/billing/plans";
+import { guestQuery, useIsGuest } from "@/lib/guest";
 
 export type PlanInfo = {
   plan: PlanId;
@@ -17,7 +18,9 @@ export type PlanInfo = {
 
 /** The user's plan, as the database decides it (paid period still running = Standard). */
 export function usePlan() {
+  const guest = useIsGuest();
   return useQuery({
+    ...guestQuery<PlanInfo>(guest, { plan: "free", subscription: null }),
     queryKey: ["plan"],
     queryFn: async (): Promise<PlanInfo> => {
       const supabase = createClient();

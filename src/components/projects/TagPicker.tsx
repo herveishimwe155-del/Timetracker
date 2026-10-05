@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useTagActions, useTags } from "@/lib/queries/catalog";
+import { useRequireAccount } from "@/lib/guest";
 
 type Props = {
   value: string[];
@@ -26,6 +27,7 @@ type Props = {
 export function TagPicker({ value, onChange, variant = "compact", disabled }: Props) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const requireAccount = useRequireAccount();
   const { data: tags = [] } = useTags();
   const { create } = useTagActions();
 
@@ -36,6 +38,7 @@ export function TagPicker({ value, onChange, variant = "compact", disabled }: Pr
   const toggle = (id: string) => onChange(value.includes(id) ? value.filter((v) => v !== id) : [...value, id]);
 
   const createTag = () =>
+    requireAccount() ||
     create.mutate(trimmed, {
       onSuccess: (tag) => {
         onChange([...value, tag.id]);

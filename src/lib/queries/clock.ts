@@ -3,13 +3,17 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { useIsGuest } from "@/lib/guest";
 
 /**
  * How far the browser clock is from the database clock, in ms (server − browser).
  * Timer starts and stops use server time, so the display corrects by this offset.
  */
 export function useServerOffset(): number {
+  // Guests have no timer to correct; the browser clock is fine.
+  const guest = useIsGuest();
   const { data } = useQuery({
+    enabled: !guest,
     queryKey: ["server-offset"],
     queryFn: async () => {
       const sentAt = Date.now();

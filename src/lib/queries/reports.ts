@@ -4,13 +4,16 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { fetchAllPages } from "@/lib/supabase/paginate";
 import { rangeInstants, type DayRange } from "@/lib/reports";
+import { guestQuery, useIsGuest } from "@/lib/guest";
 
 /**
  * Every entry that overlaps the range (the running one included), with its tags.
  * Filtering and totals happen in `buildReport`, so changing a filter needs no refetch.
  */
 export function useReportEntries(range: DayRange, timeZone: string) {
+  const guest = useIsGuest();
   return useQuery({
+    ...guestQuery(guest, []),
     // Under "entries" so Realtime changes and entry edits refresh reports too.
     queryKey: ["entries", "report", timeZone, range.from, range.to],
     queryFn: async () => {

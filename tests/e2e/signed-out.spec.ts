@@ -2,9 +2,9 @@ import { expect, test } from "@playwright/test";
 import { expectAccessible } from "./helpers";
 
 test.describe("signed out", () => {
-  test("app pages redirect to sign-in and remember where you were going", async ({ page }) => {
-    await page.goto("/reports?period=last-week");
-    await expect(page).toHaveURL(/\/login\?next=%2Freports%3Fperiod%3Dlast-week/);
+  test("settings need an account and remember where you were going", async ({ page }) => {
+    await page.goto("/settings");
+    await expect(page).toHaveURL(/\/login\?next=%2Fsettings/);
     await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
   });
 
@@ -42,5 +42,42 @@ test.describe("signed out", () => {
     await page.goto("/login");
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     expect(overflow).toBeLessThanOrEqual(0);
+  });
+});
+
+test.describe("guest mode", () => {
+  test("the app opens without an account, empty, with a sign-up prompt", async ({ page }) => {
+    await page.goto("/");
+    await expect(page).toHaveURL(/\/timer/);
+    await expect(page.getByRole("complementary", { name: "Guest mode" })).toContainText("Sign up free to start tracking");
+    await expect(page.getByRole("button", { name: "Start timer" })).toBeVisible();
+    await expectAccessible(page);
+  });
+
+  test("starting the timer asks you to sign up, then comes back", async ({ page }) => {
+    await page.goto("/timer");
+    await page.getByLabel("What are you working on?").fill("Reading");
+    await page.getByRole("button", { name: "Start timer" }).click();
+    await expect(page).toHaveURL(/\/login\?mode=signup&next=%2Ftimer/);
+    await expect(page.getByRole("heading", { name: "Create your account" })).toBeVisible();
+  });
+
+  test("the N shortcut asks you to sign up", async ({ page }) => {
+    await page.goto("/timer");
+    await expect(page.getByRole("button", { name: "Start timer" })).toBeVisible();
+    await page.keyboard.press("n");
+    await expect(page).toHaveURL(/\/login\?mode=signup/);
+  });
+
+  test("creating a project asks you to sign up", async ({ page }) => {
+    await page.goto("/projects");
+    await page.getByRole("button", { name: "New project" }).click();
+    await expect(page).toHaveURL(/\/login\?mode=signup&next=%2Fprojects/);
+  });
+
+  test("reports open empty", async ({ page }) => {
+    await page.goto("/reports");
+    await expect(page).toHaveURL(/\/reports/);
+    await expect(page.getByRole("complementary", { name: "Guest mode" })).toBeVisible();
   });
 });

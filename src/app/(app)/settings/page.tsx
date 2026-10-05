@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/shell/PageHeader";
@@ -25,6 +26,8 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
   const result = billing === "success" || billing === "failed" || billing === "cancelled" ? billing : undefined;
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
+  // Guests can look around the app, but settings belong to an account.
+  if (!data?.claims.sub) redirect("/login?next=/settings");
   const email = typeof data?.claims.email === "string" ? data.claims.email : null;
 
   const content: Record<(typeof SECTIONS)[number]["id"], React.ReactNode> = {

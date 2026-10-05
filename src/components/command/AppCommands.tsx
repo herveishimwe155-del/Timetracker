@@ -13,6 +13,7 @@ import {
   type EntryFields,
 } from "@/lib/queries/entries";
 import { CommandPalette } from "./CommandPalette";
+import { useRequireAccount } from "@/lib/guest";
 
 /** Project, tags and billable chosen in the timer bar before a timer starts. */
 export type TimerDraft = { projectId: string | null; tagIds: string[]; billable: boolean };
@@ -56,13 +57,26 @@ export function AppCommandsProvider({ children }: { children: React.ReactNode })
   const [draft, setDraft] = useState<TimerDraft>(EMPTY_DRAFT);
   const { data: running } = useRunningEntry();
   const { start, stop, remove, create } = useEntryActions();
+  const requireAccount = useRequireAccount();
   useRealtimeSync();
 
   const onError = useCallback((e: unknown) => toast.error(entryErrorMessage(e)), []);
 
   const startTimer = useCallback(
-    (fields: Partial<EntryFields> = {}) => start.mutate(fields, { onError }),
-    [start, onError],
+    (fields: Partial<EntryFields> = {}) => {
+      if (requireAccount()) return;
+      start.mutate(fields, { onError });
+    },
+    [start, onError, requireAccount],
+  );
+
+  // Guests can look at the editor's entry points, but creating needs an account.
+  const openEditor = useCallback(
+    (target: EditorTarget) => {
+      if (target.mode === "create" && requireAccount()) return;
+      setEditor(target);
+    },
+    [requireAccount],
   );
 
   const startFromBar = useCallback(() => {
@@ -126,12 +140,12 @@ export function AppCommandsProvider({ children }: { children: React.ReactNode })
         toggleTimer();
       } else if (key === "n") {
         event.preventDefault();
-        setEditor({ mode: "create" });
+        openEditor({ mode: "create" });
       }
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [toggleTimer]);
+  }, [toggleTimer, openEditor]);
 
   const value = useMemo<AppCommands>(
     () => ({
@@ -140,11 +154,11 @@ export function AppCommandsProvider({ children }: { children: React.ReactNode })
       startFromBar,
       toggleTimer,
       startTimer,
-      openEditor: setEditor,
+      openEditor,
       openPalette: () => setPaletteOpen(true),
       deleteEntry,
     }),
-    [draft, startFromBar, toggleTimer, startTimer, deleteEntry],
+    [draft, startFromBar, toggleTimer, startTimer, openEditor, deleteEntry],
   );
 
   return (
