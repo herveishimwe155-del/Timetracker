@@ -2,19 +2,27 @@ import { cn } from "@/lib/utils";
 
 export const APP_NAME = "Tickr";
 
-/** The Tickr mark: a tick on an emerald tile. Decorative; pair it with the name. */
+/**
+ * The Tickr mark: an emerald progress ring on a dark tile (timer filling up).
+ * Same geometry as src/app/icon.svg and public/brand/. Decorative; pair it with the name.
+ */
 export function LogoMark({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" aria-hidden className={cn("size-5 shrink-0", className)}>
-      <rect width="24" height="24" rx="6" fill="var(--brand)" />
-      <path
-        d="M7 12.5l3.2 3.2L17 8.8"
+    <svg viewBox="0 0 64 64" aria-hidden className={cn("size-5 shrink-0", className)}>
+      <rect width="64" height="64" rx="14" fill="var(--logo-tile)" />
+      <circle cx="32" cy="32" r="18" fill="none" stroke="var(--logo-track)" strokeWidth="7" />
+      <circle
+        cx="32"
+        cy="32"
+        r="18"
         fill="none"
-        stroke="var(--primary-foreground)"
-        strokeWidth="2.6"
+        stroke="var(--logo-ring)"
+        strokeWidth="7"
         strokeLinecap="round"
-        strokeLinejoin="round"
+        strokeDasharray="85 200"
+        transform="rotate(-90 32 32)"
       />
+      <circle cx="32" cy="32" r="4.5" fill="var(--logo-ring)" />
     </svg>
   );
 }
