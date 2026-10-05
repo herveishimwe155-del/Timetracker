@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState, useSyncExternalStore } from "react";
+import Link from "next/link";
 import { Loader2, MailCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -171,6 +172,18 @@ export function LoginForm({ next, linkError, notice }: { next: string; linkError
         >
           {mode === "sign-in" ? "Create an account" : "Sign in"}
         </button>
+      </p>
+
+      <p className="mt-4 text-center text-xs text-muted-foreground">
+        By continuing, you agree to the{" "}
+        <Link href="/terms" className="rounded-sm underline underline-offset-4 outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring">
+          Terms
+        </Link>{" "}
+        and{" "}
+        <Link href="/privacy" className="rounded-sm underline underline-offset-4 outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring">
+          Privacy policy
+        </Link>
+        .
       </p>
     </div>
   );

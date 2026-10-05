@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/shell/PageHeader";
 import { DangerZone, DataSettings, SecuritySettings, ShortcutsList } from "@/components/settings/AccountSettings";
@@ -57,6 +58,14 @@ export default async function SettingsPage() {
               {content[s.id]}
             </section>
           ))}
+          <p className="flex gap-4 text-muted-foreground">
+            <Link href="/privacy" className="rounded-sm underline-offset-4 outline-none hover:text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-ring">
+              Privacy policy
+            </Link>
+            <Link href="/terms" className="rounded-sm underline-offset-4 outline-none hover:text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-ring">
+              Terms of use
+            </Link>
+          </p>
         </div>
       </div>
     </>
