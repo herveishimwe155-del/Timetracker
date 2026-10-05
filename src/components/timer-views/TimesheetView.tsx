@@ -19,6 +19,7 @@ import { entryErrorMessage, tagIdsOf, useEntryActions, useRangeEntries, type Ent
 import { NO_PROJECT_COLOR, type DayRange } from "@/lib/reports";
 import { addDaysToKey, dayKey, formatDuration, shortDayLabel, type DurationFormat } from "@/lib/time";
 import { buildTimesheet, parseDuration, shiftEntries, slotForNewTime } from "@/lib/views";
+import { useRequireAccount } from "@/lib/guest";
 
 type Props = {
   week: DayRange;
@@ -46,6 +47,7 @@ export function TimesheetView({ week, entries, today, timeZone, nowMs, durationF
   // Rows added with "Add row", per week.
   const [extra, setExtra] = useState<Record<string, (string | null)[]>>({});
   const [copying, setCopying] = useState(false);
+  const requireAccount = useRequireAccount();
   const lastWeek = useMemo(() => ({ from: addDaysToKey(week.from, -7), to: week.from }), [week.from]);
   const { data: lastWeekEntries = [] } = useRangeEntries(lastWeek, timeZone);
   // Only entries that start last week (not ones that merely spill into it).
@@ -58,6 +60,7 @@ export function TimesheetView({ week, entries, today, timeZone, nowMs, durationF
     });
 
   async function copyLastWeek() {
+    if (requireAccount()) return;
     setCopying(true);
     let copied = 0;
     let skipped = 0;
@@ -92,6 +95,7 @@ export function TimesheetView({ week, entries, today, timeZone, nowMs, durationF
   const fmt = (ms: number) => formatDuration(Math.floor(ms / 1000), durationFormat);
 
   async function commit(projectId: string | null, dayIndex: number, currentMs: number, text: string) {
+    if (requireAccount()) return;
     const day = sheet.days[dayIndex];
     if (text.trim() === cellText(currentMs)) return;
     const seconds = parseDuration(text);

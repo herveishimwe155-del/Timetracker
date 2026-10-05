@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { track } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
 import type { Tables, TablesInsert, TablesUpdate } from "@/lib/supabase/database.types";
+import { guestQuery, useIsGuest } from "@/lib/guest";
 
 export type Client = Tables<"clients">;
 export type Project = Tables<"projects">;
@@ -37,7 +38,9 @@ const byName = <T extends { name: string }>(a: T, b: T) => a.name.localeCompare(
 /* ---------- Reads (each user has few of these, so load them whole) ---------- */
 
 export function useClients() {
+  const guest = useIsGuest();
   return useQuery({
+    ...guestQuery(guest, []),
     queryKey: catalogKeys.clients,
     queryFn: async () => {
       const { data, error } = await createClient().from("clients").select("*");
@@ -48,7 +51,9 @@ export function useClients() {
 }
 
 export function useProjects() {
+  const guest = useIsGuest();
   return useQuery({
+    ...guestQuery(guest, []),
     queryKey: catalogKeys.projects,
     queryFn: async () => {
       const { data, error } = await createClient().from("projects").select("*");
@@ -59,7 +64,9 @@ export function useProjects() {
 }
 
 export function useTags() {
+  const guest = useIsGuest();
   return useQuery({
+    ...guestQuery(guest, []),
     queryKey: catalogKeys.tags,
     queryFn: async () => {
       const { data, error } = await createClient().from("tags").select("*");
@@ -151,7 +158,9 @@ export type ProjectStats = { trackedSeconds: number; lastTrackedAt: string | nul
 
 /** Total tracked time and last activity per project id (from the project_stats function). */
 export function useProjectStats() {
+  const guest = useIsGuest();
   return useQuery({
+    ...guestQuery(guest, new Map<string, ProjectStats>()),
     // Under "entries" so it refreshes whenever entries change.
     queryKey: ["entries", "project-stats"],
     queryFn: async () => {
@@ -170,7 +179,9 @@ export function useProjectStats() {
 export type Goal = Tables<"goals">;
 
 export function useGoals() {
+  const guest = useIsGuest();
   return useQuery({
+    ...guestQuery(guest, []),
     queryKey: ["goals"],
     queryFn: async () => {
       const { data, error } = await createClient().from("goals").select("*").order("created_at");

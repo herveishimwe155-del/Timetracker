@@ -15,6 +15,7 @@ import type { Entry } from "@/lib/queries/entries";
 import type { DayRange } from "@/lib/reports";
 import { formatDuration, type DurationFormat } from "@/lib/time";
 import { goalProgress, parseDuration } from "@/lib/views";
+import { useRequireAccount } from "@/lib/guest";
 
 type Props = {
   entries: Entry[];
@@ -33,6 +34,7 @@ export function GoalsPanel({ entries, today, week, timeZone, nowMs, durationForm
   const catalog = useCatalogMaps();
   const [collapsed, setCollapsed] = useLocalStorageFlag("goals-collapsed", false);
   const [creating, setCreating] = useState(false);
+  const requireAccount = useRequireAccount();
   const fmt = (ms: number) => formatDuration(Math.floor(ms / 1000), durationFormat);
 
   return (
@@ -48,7 +50,7 @@ export function GoalsPanel({ entries, today, week, timeZone, nowMs, durationForm
           <ChevronDown className={cn("size-4 transition-transform", collapsed && "-rotate-90")} aria-hidden />
           <span id="goals-title">Goals</span>
         </button>
-        <Button variant="ghost" size="icon-sm" aria-label="Create a goal" onClick={() => setCreating(true)}>
+        <Button variant="ghost" size="icon-sm" aria-label="Create a goal" onClick={() => requireAccount() || setCreating(true)}>
           <Plus />
         </Button>
       </div>
@@ -58,7 +60,7 @@ export function GoalsPanel({ entries, today, week, timeZone, nowMs, durationForm
           {goals.length === 0 ? (
             <button
               type="button"
-              onClick={() => setCreating(true)}
+              onClick={() => requireAccount() || setCreating(true)}
               className="flex items-center gap-2 rounded-sm text-xs font-medium tracking-wide text-brand uppercase outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
             >
               <Plus className="size-3.5" aria-hidden />

@@ -5,8 +5,12 @@ import { supabaseEnv } from "./env";
 /** Routes anyone can open. Everything else needs a signed-in user. */
 const PUBLIC_PATHS = ["/login", "/auth", "/privacy", "/terms", "/pricing", "/api/billing/webhook"];
 
+/** App pages guests may look around in (empty) before signing up. Settings needs an account. */
+const GUEST_PATHS = ["/timer", "/projects", "/clients", "/reports"];
+
 const isPublic = (pathname: string) =>
-  PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+  pathname === "/" ||
+  [...PUBLIC_PATHS, ...GUEST_PATHS].some((p) => pathname === p || pathname.startsWith(`${p}/`));
 
 /**
  * Refreshes the Supabase session cookie on every request and redirects:

@@ -22,6 +22,7 @@ import { useSettings } from "@/lib/queries/profile";
 import { dayKey, dayLabel, formatDuration, type DurationFormat } from "@/lib/time";
 import { ProjectDialog, type ProjectDialogTarget } from "./ProjectDialog";
 import { ProjectDot } from "./ProjectDot";
+import { useRequireAccount } from "@/lib/guest";
 
 const ALL = "__all__";
 const NONE = "__none__";
@@ -41,6 +42,7 @@ export function ProjectsManager() {
   const { timeZone, durationFormat } = useSettings();
   const now = useNow(60_000);
   const [dialog, setDialog] = useState<ProjectDialogTarget | null>(null);
+  const requireAccount = useRequireAccount();
   const [search, setSearch] = useState("");
   const [clientFilter, setClientFilter] = useState(ALL);
   const [status, setStatus] = useState<Status>("active");
@@ -97,7 +99,7 @@ export function ProjectsManager() {
             className="h-9 pl-8"
           />
         </div>
-        <Button className="ml-auto h-9" onClick={() => setDialog({ mode: "create" })}>
+        <Button className="ml-auto h-9" onClick={() => requireAccount() || setDialog({ mode: "create" })}>
           <Plus />
           New project
         </Button>

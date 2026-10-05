@@ -17,6 +17,7 @@ import { track } from "@/lib/analytics";
 import { fetchAllPages } from "@/lib/supabase/paginate";
 import { rangeInstants, type DayRange } from "@/lib/reports";
 import { addDaysToKey, dayKey, wallTimeToInstant } from "@/lib/time";
+import { guestQuery, useIsGuest } from "@/lib/guest";
 
 /** An entry with the ids of its tags. */
 export type Entry = Tables<"time_entries"> & { time_entry_tags: { tag_id: string }[] };
@@ -55,7 +56,9 @@ export function entryErrorMessage(error: unknown): string {
 
 /** The running timer, or null. */
 export function useRunningEntry() {
+  const guest = useIsGuest();
   return useQuery({
+    ...guestQuery(guest, null),
     queryKey: entryKeys.running,
     queryFn: async () => {
       const { data, error } = await createClient()
@@ -74,7 +77,13 @@ export function useRunningEntry() {
  * in the user's time zone so a day is never split across two pages.
  */
 export function useEntryPages(timeZone: string) {
+  const guest = useIsGuest();
   return useInfiniteQuery({
+    // One empty page with nothing older (its endKey is never read).
+    ...guestQuery(guest, {
+      pages: [{ entries: [] as Entry[], endKey: "", hasOlder: false }],
+      pageParams: [null as string | null],
+    }),
     queryKey: entryKeys.list(timeZone),
     // null = the newest page, ending at tomorrow's midnight in the user's zone.
     initialPageParam: null as string | null,
@@ -118,7 +127,9 @@ const REALTIME_TABLES = {
  * Used by the Calendar and Timesheet views.
  */
 export function useRangeEntries(range: DayRange, timeZone: string) {
+  const guest = useIsGuest();
   return useQuery({
+    ...guestQuery(guest, []),
     queryKey: entryKeys.range(timeZone, range),
     queryFn: async () => {
       const { fromMs, toMs } = rangeInstants(range, timeZone);

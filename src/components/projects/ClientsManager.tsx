@@ -19,6 +19,7 @@ import { catalogErrorMessage, useClientActions, useClients, useProjects, useProj
 import { useNow } from "@/lib/queries/clock";
 import { useSettings } from "@/lib/queries/profile";
 import { dayKey, dayLabel, formatDuration } from "@/lib/time";
+import { useRequireAccount } from "@/lib/guest";
 
 type Status = "active" | "archived" | "all";
 type SortKey = "name" | "projects" | "last" | "tracked";
@@ -39,6 +40,7 @@ export function ClientsManager() {
   const { timeZone, durationFormat } = useSettings();
   const now = useNow(60_000);
   const [dialog, setDialog] = useState<DialogTarget | null>(null);
+  const requireAccount = useRequireAccount();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<Status>("active");
   const [sort, setSort] = useState<{ key: SortKey; desc: boolean }>({ key: "name", desc: false });
@@ -94,7 +96,7 @@ export function ClientsManager() {
             className="h-9 pl-8"
           />
         </div>
-        <Button className="ml-auto h-9" onClick={() => setDialog({ mode: "create" })}>
+        <Button className="ml-auto h-9" onClick={() => requireAccount() || setDialog({ mode: "create" })}>
           <Plus />
           New client
         </Button>
@@ -114,7 +116,7 @@ export function ClientsManager() {
           Clients group projects, so you can see time per customer.{" "}
           <button
             type="button"
-            onClick={() => setDialog({ mode: "create" })}
+            onClick={() => requireAccount() || setDialog({ mode: "create" })}
             className="rounded-sm text-brand underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
           >
             Create your first client

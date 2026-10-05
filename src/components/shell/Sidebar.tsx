@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
-import { LogOut, Moon, PanelLeftClose, PanelLeftOpen, Sun } from "lucide-react";
+import { LogIn, LogOut, Moon, PanelLeftClose, PanelLeftOpen, Sun, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useLocalStorageFlag } from "@/hooks/use-local-storage-flag";
 import { signOut } from "@/lib/auth/actions";
+import { signUpUrl } from "@/lib/guest";
 import { useResolvedTheme, useThemePreference } from "@/lib/theme";
 import { APP_NAME, LogoMark } from "./Logo";
 import { footerNav, mainNav, type NavItem } from "./nav";
@@ -40,7 +41,7 @@ function NavLink({ item, active, collapsed }: { item: NavItem; active: boolean; 
   );
 }
 
-export function Sidebar({ email }: { email: string | null }) {
+export function Sidebar({ email, guest = false }: { email: string | null; guest?: boolean }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useLocalStorageFlag("sidebar-collapsed", false);
   const theme = useResolvedTheme();
@@ -118,6 +119,34 @@ export function Sidebar({ email }: { email: string | null }) {
           {theme === "dark" ? <Sun className="size-4 shrink-0" strokeWidth={1.75} /> : <Moon className="size-4 shrink-0" strokeWidth={1.75} />}
           {!collapsed && <span className="hidden md:inline">{theme === "dark" ? "Light mode" : "Dark mode"}</span>}
         </button>
+        {guest ? (
+          <>
+            <Link
+              href={signUpUrl(pathname)}
+              aria-label="Sign up free"
+              className={cn(
+                "flex h-8 w-full items-center justify-center gap-2 rounded-sm bg-brand font-medium text-primary-foreground transition-colors outline-none",
+                "hover:bg-brand/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                !collapsed && "md:justify-start md:px-2",
+              )}
+            >
+              <UserPlus className="size-4 shrink-0" strokeWidth={1.75} />
+              {!collapsed && <span className="hidden md:inline">Sign up free</span>}
+            </Link>
+            <Link
+              href={`/login?next=${encodeURIComponent(pathname)}`}
+              aria-label="Sign in"
+              className={cn(
+                "flex h-8 w-full items-center justify-center gap-2 rounded-sm text-muted-foreground transition-colors outline-none",
+                "hover:bg-surface hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring",
+                !collapsed && "md:justify-start md:px-2",
+              )}
+            >
+              <LogIn className="size-4 shrink-0" strokeWidth={1.75} />
+              {!collapsed && <span className="hidden md:inline">Sign in</span>}
+            </Link>
+          </>
+        ) : (
         <form action={signOut}>
           <button
             type="submit"
@@ -135,6 +164,7 @@ export function Sidebar({ email }: { email: string | null }) {
             )}
           </button>
         </form>
+        )}
       </div>
     </aside>
   );

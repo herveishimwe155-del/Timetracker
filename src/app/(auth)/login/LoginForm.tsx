@@ -30,8 +30,18 @@ function GoogleIcon() {
   );
 }
 
-export function LoginForm({ next, linkError, notice }: { next: string; linkError: boolean; notice?: string }) {
-  const [mode, setMode] = useState<Mode>("sign-in");
+export function LoginForm({
+  next,
+  linkError,
+  notice,
+  initialMode = "sign-in",
+}: {
+  next: string;
+  linkError: boolean;
+  notice?: string;
+  initialMode?: Mode;
+}) {
+  const [mode, setMode] = useState<Mode>(initialMode);
   const [signInState, signInAction, signingIn] = useActionState<AuthState, FormData>(signIn, {});
   const [signUpState, signUpAction, signingUp] = useActionState<AuthState, FormData>(signUp, {});
   const [googleError, setGoogleError] = useState<string | null>(null);

@@ -12,6 +12,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
     <main className="flex min-h-dvh items-center justify-center px-4 py-12">
       <LoginForm
         next={safeNextPath(first(params.next))}
+        initialMode={first(params.mode) === "signup" ? "sign-up" : "sign-in"}
         linkError={first(params.error) === "link"}
         notice={first(params.deleted) === "1" ? "Your account and all its data were deleted." : undefined}
       />
