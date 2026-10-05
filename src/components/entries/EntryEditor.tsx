@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { z } from "zod";
-import { DollarSign, Loader2 } from "lucide-react";
+import { DollarSign, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -58,20 +58,37 @@ function initialValues(target: EditorTarget, timeZone: string, fallback: { start
   };
 }
 
-export function EntryEditor({ target, onClose }: { target: EditorTarget | null; onClose: () => void }) {
+export function EntryEditor({
+  target,
+  onClose,
+  onDelete,
+}: {
+  target: EditorTarget | null;
+  onClose: () => void;
+  /** Deletes the edited entry (with an Undo toast). */
+  onDelete: (entry: Entry) => void;
+}) {
   return (
     <Dialog open={target !== null} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-md">
         {/* Remount per target so the form starts from that entry's values. */}
         {target && (
-          <EditorForm key={target.mode === "edit" ? target.entry.id : "new"} target={target} onDone={onClose} />
+          <EditorForm key={target.mode === "edit" ? target.entry.id : "new"} target={target} onDone={onClose} onDelete={onDelete} />
         )}
       </DialogContent>
     </Dialog>
   );
 }
 
-function EditorForm({ target, onDone }: { target: EditorTarget; onDone: () => void }) {
+function EditorForm({
+  target,
+  onDone,
+  onDelete,
+}: {
+  target: EditorTarget;
+  onDone: () => void;
+  onDelete: (entry: Entry) => void;
+}) {
   const { timeZone } = useSettings();
   const { create, update } = useEntryActions();
   const { data: pages } = useEntryPages(timeZone);
@@ -192,6 +209,21 @@ function EditorForm({ target, onDone }: { target: EditorTarget; onDone: () => vo
       </p>
 
       <DialogFooter>
+        {target.mode === "edit" && (
+          <Button
+            type="button"
+            variant="ghost"
+            className="mr-auto text-danger hover:bg-danger/10 hover:text-danger"
+            disabled={pending}
+            onClick={() => {
+              onDelete(target.entry);
+              onDone();
+            }}
+          >
+            <Trash2 />
+            Delete
+          </Button>
+        )}
         <Button type="button" variant="ghost" onClick={onDone}>
           Cancel
         </Button>
