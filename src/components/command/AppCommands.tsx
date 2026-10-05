@@ -150,7 +150,7 @@ export function AppCommandsProvider({ children }: { children: React.ReactNode })
   return (
     <Context.Provider value={value}>
       {children}
-      <EntryEditor target={editor} onClose={() => setEditor(null)} />
+      <EntryEditor target={editor} onClose={() => setEditor(null)} onDelete={deleteEntry} />
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} running={running ?? null} />
     </Context.Provider>
   );
