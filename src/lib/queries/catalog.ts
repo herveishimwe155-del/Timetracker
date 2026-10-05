@@ -27,6 +27,8 @@ export function catalogErrorMessage(error: unknown, what: "client" | "project" |
       : `A ${what} with this name already exists.`;
   }
   if (e?.code === "23514") return `Give the ${what} a name.`;
+  if (e?.code === "TK402")
+    return "The Free plan includes up to 10 active projects. Archive one, or upgrade in Settings → Plan and billing.";
   return `Something went wrong saving the ${what}. Try again.`;
 }
 
