@@ -38,6 +38,11 @@
   --project-red: #e66767;
   --no-project: #52525b; /* zinc-600 */
 
+  /* Logo: on the dark theme the tile is lifted to the surface step so it stays visible */
+  --logo-tile: #18181b;
+  --logo-track: #3f3f46;
+  --logo-ring: #10b981;
+
   /* shadcn/ui names mapped to Monolith */
   --background: var(--bg);
   --foreground: var(--text);
@@ -102,6 +107,9 @@
   --project-violet: #4a3aa7;
   --project-red: #e34948;
   --no-project: #a1a1aa; /* zinc-400 */
+
+  --logo-tile: #09090b;
+  --logo-track: #27272a;
 }
 
 @theme inline {
