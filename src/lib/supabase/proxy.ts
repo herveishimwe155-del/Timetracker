@@ -3,7 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { supabaseEnv } from "./env";
 
 /** Routes anyone can open. Everything else needs a signed-in user. */
-const PUBLIC_PATHS = ["/login", "/auth"];
+const PUBLIC_PATHS = ["/login", "/auth", "/privacy", "/terms"];
 
 const isPublic = (pathname: string) =>
   PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
