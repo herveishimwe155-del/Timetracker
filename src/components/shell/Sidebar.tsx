@@ -65,7 +65,7 @@ export function Sidebar({ email, guest = false }: { email: string | null; guest?
     <aside
       data-collapsed={collapsed}
       className={cn(
-        "sticky top-0 flex h-dvh shrink-0 flex-col border-r border-line bg-sidebar transition-[width]",
+        "glass flex h-full shrink-0 flex-col overflow-hidden transition-[width]",
         collapsed ? "w-12" : "w-12 md:w-52",
       )}
     >

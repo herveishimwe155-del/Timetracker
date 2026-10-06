@@ -35,7 +35,7 @@ export function TimerBar() {
 
   // One row from 640px; on phones the description gets its own row above the controls.
   return (
-    <div role="region" aria-label="Current timer" className="sticky top-0 z-10 flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-line bg-background/95 px-3 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:h-12 sm:flex-nowrap sm:py-0 md:px-4">
+    <div role="region" aria-label="Current timer" className="glass relative z-10 flex shrink-0 flex-wrap items-center gap-x-2 gap-y-1 px-3 py-2 sm:h-14 sm:flex-nowrap sm:py-0 md:px-4">
       <DescriptionInput
         initial={running?.description ?? ""}
         running={running !== null}

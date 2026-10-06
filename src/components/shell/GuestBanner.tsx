@@ -8,7 +8,7 @@ import { signUpUrl } from "@/lib/guest";
 export function GuestBanner() {
   const pathname = usePathname();
   return (
-    <aside aria-label="Guest mode" className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-b border-line bg-surface px-4 py-2 text-center">
+    <aside aria-label="Guest mode" className="glass flex shrink-0 flex-wrap items-center justify-center gap-x-3 gap-y-1 px-4 py-2 text-center">
       <span className="text-muted-foreground">You&apos;re looking around Tickr. Sign up free to start tracking your time.</span>
       <Link
         href={signUpUrl(pathname)}
