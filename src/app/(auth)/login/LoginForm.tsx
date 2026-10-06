@@ -80,7 +80,7 @@ export function LoginForm({
   // After sign-up, replace the form so there's nothing to click twice.
   if (mode === "sign-up" && signUpState.notice) {
     return (
-      <div className="w-full max-w-sm rounded-md bg-surface p-6 shadow-sm">
+      <div className="glass w-full max-w-sm p-6">
         {brand}
         <MailCheck className="size-5 text-brand" strokeWidth={1.75} aria-hidden />
         <h1 className="mt-3 text-lg font-medium tracking-tight">Check your email</h1>
@@ -96,7 +96,7 @@ export function LoginForm({
   }
 
   return (
-    <div className="w-full max-w-sm rounded-md bg-surface p-6 shadow-sm">
+    <div className="glass w-full max-w-sm p-6">
       {brand}
 
       <h1 className="text-lg font-medium tracking-tight">

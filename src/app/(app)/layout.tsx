@@ -33,12 +33,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             >
               Skip to content
             </a>
-            <div className="flex min-h-dvh">
+            {/* Fixed panels over the moving backdrop; only the main panel scrolls. */}
+            <div className="flex h-dvh gap-2 overflow-hidden p-2 md:gap-3 md:p-3">
               <Sidebar email={typeof data?.claims.email === "string" ? data.claims.email : null} guest={guest} />
-              <div className="flex min-w-0 flex-1 flex-col">
+              <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 md:gap-3">
                 {guest && <GuestBanner />}
                 <TimerBar />
-                <main id="main" tabIndex={-1} className="w-full min-w-0 flex-1 px-4 pb-8 outline-none md:px-6">
+                <main id="main" tabIndex={-1} className="glass min-h-0 w-full min-w-0 flex-1 overflow-y-auto px-3 pb-8 outline-none sm:px-4 md:px-6">
                   {children}
                 </main>
               </div>

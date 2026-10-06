@@ -45,7 +45,7 @@ export function VerifyForm() {
   }
 
   return (
-    <div className="w-full max-w-sm rounded-md bg-surface p-6 shadow-sm">
+    <div className="glass w-full max-w-sm p-6">
       <div className="mb-6">
         <Logo />
       </div>

@@ -103,7 +103,7 @@ export function ClientsManager() {
       </div>
 
       {isPending ? (
-        <div className="h-24 animate-pulse rounded-md bg-surface" aria-busy="true" aria-label="Loading clients" />
+        <div className="h-24 animate-pulse rounded-md bg-surface" role="status" aria-busy="true" aria-label="Loading clients" />
       ) : isError ? (
         <div className="flex items-center gap-3 rounded-md border border-danger/40 p-4">
           Clients couldn&apos;t be loaded.

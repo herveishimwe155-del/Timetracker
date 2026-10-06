@@ -106,7 +106,7 @@ export function ProjectsManager() {
       </div>
 
       {isPending ? (
-        <div className="h-24 animate-pulse rounded-md bg-surface" aria-busy="true" aria-label="Loading projects" />
+        <div className="h-24 animate-pulse rounded-md bg-surface" role="status" aria-busy="true" aria-label="Loading projects" />
       ) : isError ? (
         <div className="flex items-center gap-3 rounded-md border border-danger/40 p-4">
           Projects couldn&apos;t be loaded.

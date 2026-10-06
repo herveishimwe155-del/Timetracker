@@ -45,7 +45,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
       <PageHeader title="Settings" />
       <div className="grid gap-10 lg:grid-cols-[12rem_minmax(0,1fr)]">
         <nav aria-label="Settings sections" className="hidden lg:block">
-          <ul className="sticky top-16 flex flex-col gap-0.5">
+          <ul className="sticky top-4 flex flex-col gap-0.5">
             {SECTIONS.map((s) => (
               <li key={s.id}>
                 <a

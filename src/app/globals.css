@@ -5,9 +5,11 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Monolith design tokens.
- * Dark is the default (:root). Light mode overrides the palette on
- * html[data-theme="light"], set before first paint by the script in the root layout.
+ * Design tokens: floating glass panels over a moving blue wave (WaveBackground).
+ * Dark (default, :root) is smoky glass; light (html[data-theme="light"]) is white
+ * frosted glass, over the same backdrop. The theme script in the root layout sets
+ * data-theme before first paint. Glass opacities are chosen so every text colour
+ * keeps 4.5:1 contrast even over the brightest part of the wave.
  * shadcn/ui reads its own names (--background, --primary, --accent...), which are
  * mapped onto the Monolith palette below. Note: shadcn's --accent is the subtle
  * hover fill; the Monolith emerald accent is --brand (Tailwind: bg-brand, text-brand).
@@ -15,17 +17,21 @@
 :root {
   color-scheme: dark;
 
-  /* Monolith palette */
-  --bg: #09090b; /* zinc-950, Deep Obsidian */
-  --surface: #18181b; /* zinc-900, cards, sidebar, menus */
-  --surface-2: #27272a; /* zinc-800, hover and selected fills */
-  --line: #27272a; /* zinc-800, every 1px border */
-  --text: #fafafa; /* zinc-50 */
-  --text-muted: #a1a1aa; /* zinc-400 */
-  --brand: #10b981; /* emerald-500, running timer, active, primary */
-  --brand-2: #22d3ee; /* cyan-400, charts and secondary highlights */
-  --danger: #ef4444; /* red-500 */
-  --radius: 4px;
+  /* Palette */
+  --bg: #09090b; /* text on brand fills */
+  --glass: rgb(22 22 42 / 0.7); /* floating panels: sidebar, timer bar, main */
+  --glass-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.12), inset 0 0 0 1px rgb(255 255 255 / 0.08),
+    inset 0 0 28px rgb(255 255 255 / 0.04), 0 28px 60px -18px rgb(0 0 12 / 0.6);
+  --surface: rgb(255 255 255 / 0.06); /* cards inside a panel */
+  --surface-2: rgb(255 255 255 / 0.1); /* hover and selected fills */
+  --line: rgb(255 255 255 / 0.1); /* every 1px border */
+  --text: #fafafa;
+  --text-muted: #d4d4d8; /* zinc-300 */
+  --brand: #6ee7b7; /* emerald-300: running timer, active, primary */
+  --brand-2: #67e8f9; /* cyan-300 */
+  --danger: #fecaca; /* red-200 */
+  --radius: 8px;
 
   /* Project colours, stepped per theme (src/lib/project-colors.ts maps hex → these) */
   --project-blue: #3987e5;
@@ -36,7 +42,7 @@
   --project-green: #008300;
   --project-violet: #9085e9;
   --project-red: #e66767;
-  --no-project: #52525b; /* zinc-600 */
+  --no-project: #a1a1aa; /* zinc-400 */
 
   /* Logo: on the dark theme the tile is lifted to the surface step so it stays visible */
   --logo-tile: #18181b;
@@ -44,11 +50,11 @@
   --logo-ring: #10b981;
 
   /* shadcn/ui names mapped to Monolith */
-  --background: var(--bg);
+  --background: transparent; /* the wave shows through */
   --foreground: var(--text);
   --card: var(--surface);
   --card-foreground: var(--text);
-  --popover: var(--surface);
+  --popover: rgb(34 34 38 / 0.94);
   --popover-foreground: var(--text);
   --primary: var(--brand);
   --primary-foreground: var(--bg);
@@ -60,14 +66,14 @@
   --accent-foreground: var(--text);
   --destructive: var(--danger);
   --border: var(--line);
-  --input: var(--line);
+  --input: rgb(255 255 255 / 0.16);
   --ring: var(--brand);
   --chart-1: var(--brand);
   --chart-2: var(--brand-2);
   --chart-3: #71717a; /* zinc-500 */
   --chart-4: #52525b; /* zinc-600 */
   --chart-5: #3f3f46; /* zinc-700 */
-  --sidebar: var(--bg);
+  --sidebar: var(--glass);
   --sidebar-foreground: var(--text);
   --sidebar-primary: var(--brand);
   --sidebar-primary-foreground: var(--bg);
@@ -77,22 +83,28 @@
   --sidebar-ring: var(--brand);
 }
 
-/* Light mode: same roles, light steps. Text-bearing colours meet WCAG AA (4.5:1) on white. */
+/* Light mode: white frosted glass over the same backdrop. Text colours keep 4.5:1 on it. */
 :root[data-theme="light"] {
   color-scheme: light;
 
-  --bg: #fafafa; /* zinc-50 */
-  --surface: #ffffff;
-  --surface-2: #f4f4f5; /* zinc-100 */
-  --line: #e4e4e7; /* zinc-200 */
-  --text: #09090b; /* zinc-950 */
-  --text-muted: #71717a; /* zinc-500, 4.8:1 on white */
-  --brand: #047857; /* emerald-700, 5.5:1 on white */
+  --bg: #fafafa;
+  --glass: rgb(255 255 255 / 0.86);
+  --glass-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.9), inset 0 0 0 1px rgb(255 255 255 / 0.55),
+    0 28px 60px -18px rgb(0 0 30 / 0.55);
+  --surface: rgb(255 255 255 / 0.55);
+  --surface-2: rgb(9 9 11 / 0.05);
+  --line: rgb(9 9 11 / 0.1);
+  --text: #09090b;
+  --text-muted: #3f3f46; /* zinc-700 */
+  --brand: #065f46; /* emerald-800 */
   --brand-2: #0e7490; /* cyan-700 */
-  --danger: #dc2626; /* red-600 */
+  --danger: #991b1b; /* red-800 */
+  --popover: rgb(255 255 255 / 0.94);
+  --input: rgb(9 9 11 / 0.14);
 
   --primary-foreground: #ffffff;
-  --sidebar: var(--surface);
+  --sidebar: var(--glass);
   --sidebar-primary-foreground: #ffffff;
   --chart-3: #a1a1aa;
   --chart-4: #d4d4d8;
@@ -157,7 +169,7 @@
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
 
-  /* 4px radius on everything (rounded-full is untouched) */
+  /* One radius for controls and cards (rounded-full is untouched); panels use .glass */
   --radius-xs: var(--radius);
   --radius-sm: var(--radius);
   --radius-md: var(--radius);
@@ -167,7 +179,7 @@
   --radius-3xl: var(--radius);
   --radius-4xl: var(--radius);
 
-  /* No drop shadows: every elevation is a 1px inner border */
+  /* Small elevations are a 1px inner border; floating panels get --glass-shadow */
   --shadow-2xs: inset 0 0 0 1px var(--line);
   --shadow-xs: inset 0 0 0 1px var(--line);
   --shadow-sm: inset 0 0 0 1px var(--line);
@@ -199,6 +211,8 @@
   }
   html {
     @apply font-sans;
+    /* Behind the wave layer, for overscroll and the first frame */
+    background-color: #0a0f2e;
   }
   body {
     @apply bg-background text-foreground;
@@ -206,6 +220,122 @@
   }
   ::selection {
     background: color-mix(in oklab, var(--brand) 35%, transparent);
+  }
+}
+
+/* A floating panel of frosted glass. */
+@utility glass {
+  background-color: var(--glass);
+  -webkit-backdrop-filter: blur(28px) saturate(150%);
+  backdrop-filter: blur(28px) saturate(150%);
+  box-shadow: var(--glass-shadow);
+  border-radius: 20px;
+}
+
+/* Menus, popovers, dialogs and toasts float as glass too. */
+[data-slot="popover-content"],
+[data-slot="dropdown-menu-content"],
+[data-slot="dropdown-menu-sub-content"],
+[data-slot="dialog-content"],
+[data-sonner-toast] {
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  backdrop-filter: blur(24px) saturate(150%);
+}
+
+/*
+ * The backdrop: a deep navy night with a glowing electric-blue wave rolling
+ * along the bottom (see src/components/shell/WaveBackground.tsx). Soft shapes
+ * drift and overlap so the horizon undulates. Only transforms animate.
+ */
+.wave {
+  position: fixed;
+  inset: -48px;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  background: linear-gradient(180deg, #060920 0%, #0a0f2e 42%, #12168a 72%, #2326e8 100%);
+  transform: translate3d(var(--wave-x, 0px), var(--wave-y, 0px), 0);
+  transition: transform 900ms cubic-bezier(0.2, 0, 0, 1);
+}
+.wave-shape {
+  position: absolute;
+  border-radius: 50%;
+  will-change: transform;
+  animation: wave-drift var(--wave-duration, 20s) ease-in-out infinite alternate;
+}
+/* The main body of the wave: electric blue across the bottom. */
+.wave-body {
+  left: -20vw;
+  bottom: -38vh;
+  width: 140vw;
+  height: 80vh;
+  background: radial-gradient(closest-side, rgb(46 48 255 / 0.95), rgb(46 48 255 / 0.55) 55%, rgb(46 48 255 / 0));
+  --wave-duration: 18s;
+  --wave-dx: 6vw;
+  --wave-dy: -3vh;
+}
+/* Deeper indigo underneath, lower left. */
+.wave-indigo {
+  left: -15vw;
+  bottom: -30vh;
+  width: 70vw;
+  height: 65vh;
+  background: radial-gradient(closest-side, rgb(58 30 232 / 0.8), rgb(58 30 232 / 0));
+  --wave-duration: 24s;
+  --wave-dx: 10vw;
+  --wave-dy: -4vh;
+}
+/* The bright azure crest on the right. */
+.wave-crest {
+  right: -12vw;
+  bottom: 2vh;
+  width: 55vw;
+  height: 50vh;
+  background: radial-gradient(closest-side, rgb(74 155 255 / 0.85), rgb(60 120 255 / 0.35) 55%, rgb(60 120 255 / 0));
+  --wave-duration: 16s;
+  --wave-dx: -9vw;
+  --wave-dy: -5vh;
+}
+/* A dark swell of night dipping into the wave, which gives the horizon its curve. */
+.wave-dip {
+  left: 0vw;
+  bottom: 26vh;
+  width: 62vw;
+  height: 50vh;
+  background: radial-gradient(closest-side, rgb(10 15 46 / 0.95), rgb(10 15 46 / 0.6) 50%, rgb(10 15 46 / 0));
+  --wave-duration: 20s;
+  --wave-dx: 18vw;
+  --wave-dy: 3vh;
+}
+/* A faint glow high in the night so the top isn't flat. */
+.wave-haze {
+  right: 10vw;
+  top: -20vh;
+  width: 60vw;
+  height: 50vh;
+  background: radial-gradient(closest-side, rgb(40 50 140 / 0.35), rgb(40 50 140 / 0));
+  --wave-duration: 30s;
+  --wave-dx: -8vw;
+  --wave-dy: 4vh;
+}
+@keyframes wave-drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(var(--wave-dx, 0), var(--wave-dy, 0), 0) scale(1.1);
+  }
+}
+/* Still: when the device asks for less motion, or the setting is off. */
+.wave[data-still] .wave-shape {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .wave {
+    transition: none;
+  }
+  .wave-shape {
+    animation: none;
   }
 }
 

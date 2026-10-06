@@ -31,7 +31,7 @@ function useTimeZones(current: string) {
 export function SettingsForm() {
   const settings = useSettings();
   if (!settings.loaded) {
-    return <div className="h-64 animate-pulse rounded-md bg-surface" aria-busy="true" aria-label="Loading settings" />;
+    return <div className="h-64 animate-pulse rounded-md bg-surface" role="status" aria-busy="true" aria-label="Loading settings" />;
   }
   // Remount when the saved settings change elsewhere, so the form starts from them.
   return <Form key={`${settings.timeZone}|${settings.weekStart}|${settings.durationFormat}|${settings.timeFormat}|${settings.fullName}`} saved={settings} />;
