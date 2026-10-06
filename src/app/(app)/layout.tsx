@@ -33,7 +33,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             >
               Skip to content
             </a>
-            {/* Fixed panels over the sky; only the main panel scrolls. */}
+            {/* Fixed panels over the moving backdrop; only the main panel scrolls. */}
             <div className="flex h-dvh gap-2 overflow-hidden p-2 md:gap-3 md:p-3">
               <Sidebar email={typeof data?.claims.email === "string" ? data.claims.email : null} guest={guest} />
               <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 md:gap-3">

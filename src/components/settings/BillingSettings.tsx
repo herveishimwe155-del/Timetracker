@@ -61,7 +61,7 @@ export function BillingSettings({ configured, result }: { configured: boolean; r
       )}
 
       {isPending ? (
-        <div className="h-16 w-full animate-pulse rounded-md bg-surface" aria-busy="true" aria-label="Loading your plan" />
+        <div className="h-16 w-full animate-pulse rounded-md bg-surface" role="status" aria-busy="true" aria-label="Loading your plan" />
       ) : isError ? (
         <div className="flex items-center gap-3">
           <span className="text-danger">Your plan couldn&apos;t be loaded.</span>

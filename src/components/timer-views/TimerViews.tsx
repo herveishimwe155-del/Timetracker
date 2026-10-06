@@ -89,13 +89,11 @@ export function TimerViews() {
   // Everything here depends on the current time and the browser's time zone, which the
   // server can't know; drawing it only in the browser avoids hydration mismatches.
   if (!isClient) {
-    return <div className="mt-3 h-64 animate-pulse rounded-md bg-surface" aria-busy="true" aria-label="Loading" />;
+    return <div role="status" aria-label="Loading" aria-busy="true" className="mt-3 h-64 animate-pulse rounded-md bg-surface" />;
   }
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="sr-only">Timer</h1>
-
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-3">
         {/* Date navigator */}
         <div className="flex h-9 items-center rounded-md shadow-sm">

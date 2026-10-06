@@ -27,7 +27,7 @@ export function EntryList() {
 
   if (isPending) {
     return (
-      <div className="flex flex-col gap-2" aria-busy="true" aria-label="Loading entries">
+      <div className="flex flex-col gap-2" role="status" aria-busy="true" aria-label="Loading entries">
         {Array.from({ length: 4 }, (_, i) => (
           <div key={i} className="h-10 animate-pulse rounded-sm bg-surface" />
         ))}

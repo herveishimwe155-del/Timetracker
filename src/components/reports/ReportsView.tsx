@@ -198,7 +198,7 @@ export function ReportsView() {
       {customError && <p className="text-danger">{customError}</p>}
 
       {isPending ? (
-        <div className="h-80 animate-pulse rounded-md bg-surface" aria-busy="true" aria-label="Loading report" />
+        <div className="h-80 animate-pulse rounded-md bg-surface" role="status" aria-busy="true" aria-label="Loading report" />
       ) : isError ? (
         <div className="flex items-center gap-3 rounded-md border border-danger/40 p-4">
           This report couldn&apos;t be loaded.

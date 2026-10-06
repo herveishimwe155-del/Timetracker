@@ -4,7 +4,7 @@ import { Monitor, Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useThemePreference, type ThemePreference } from "@/lib/theme";
 import { useLocalStorageFlag } from "@/hooks/use-local-storage-flag";
-import { SKY_MOTION_KEY } from "@/components/shell/SkyBackground";
+import { BACKGROUND_MOTION_KEY } from "@/components/shell/WaveBackground";
 
 const OPTIONS: { value: ThemePreference; label: string; icon: typeof Sun; hint: string }[] = [
   { value: "dark", label: "Dark", icon: Moon, hint: "Smoky glass" },
@@ -15,7 +15,7 @@ const OPTIONS: { value: ThemePreference; label: string; icon: typeof Sun; hint: 
 /** Theme and background motion. Apply instantly and are saved on this device only. */
 export function ThemeSettings() {
   const [preference, setPreference] = useThemePreference();
-  const [moving, setMoving] = useLocalStorageFlag(SKY_MOTION_KEY, true);
+  const [moving, setMoving] = useLocalStorageFlag(BACKGROUND_MOTION_KEY, true);
 
   return (
     <fieldset className="flex max-w-xl flex-col gap-2">
@@ -59,7 +59,7 @@ export function ThemeSettings() {
         <span className="min-w-0">
           <span className="block">Moving background</span>
           <span className="block text-xs text-muted-foreground">
-            The sky drifts slowly and shifts with your pointer. Turn off to keep it still (it&apos;s always still if your
+            The blue wave drifts slowly and shifts with your pointer. Turn off to keep it still (it&apos;s always still if your
             device asks for less motion).
           </span>
         </span>
