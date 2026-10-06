@@ -124,7 +124,7 @@ export function ClientsManager() {
           .
         </EmptyState>
       ) : (
-        <div className="overflow-x-auto rounded-md shadow-sm">
+        <div className="overflow-x-auto rounded-md shadow-sm" data-reveal>
           <table className="w-full min-w-[560px] text-left">
             <caption className="sr-only">Clients</caption>
             <thead className="text-xs text-muted-foreground uppercase">

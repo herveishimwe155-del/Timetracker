@@ -23,6 +23,7 @@ import {
 import { addDaysToKey, dayKey, formatDuration } from "@/lib/time";
 import { Breakdown } from "./Breakdown";
 import { DailyChart } from "./DailyChart";
+import { CountUp } from "@/components/motion/CountUp";
 
 const PRESET_LABELS: Record<RangePreset, string> = {
   "this-week": "This week",
@@ -212,31 +213,45 @@ export function ReportsView() {
         </EmptyState>
       ) : (
         <>
-          <div className="flex flex-wrap items-end gap-x-10 gap-y-4">
-            <div>
+          <div className="grid gap-3 sm:grid-cols-[2fr_1fr_1fr]">
+            <div className="rounded-md bg-surface p-4 shadow-sm" data-reveal data-tilt="5">
               <div className="text-muted-foreground">Total</div>
-              <div className="tabular text-5xl font-medium tracking-tight">{fmt(report.totalMs)}</div>
+              <div className="tabular text-5xl font-medium tracking-tight">
+                <CountUp value={report.totalMs} format={fmt} jump={1500} />
+              </div>
             </div>
-            <div>
+            <div
+              className="rounded-md bg-surface p-4 shadow-sm"
+              data-reveal
+              data-tilt="7"
+              style={{ "--reveal-delay": "80ms" } as React.CSSProperties}
+            >
               <div className="text-muted-foreground">Billable</div>
               <div className="tabular text-xl">
-                {fmt(report.billableMs)}
+                <CountUp value={report.billableMs} format={fmt} jump={1500} />
                 <span className="ml-2 text-sm text-muted-foreground">
                   {report.totalMs > 0 ? Math.round((report.billableMs / report.totalMs) * 100) : 0}%
                 </span>
               </div>
             </div>
-            <div>
+            <div
+              className="rounded-md bg-surface p-4 shadow-sm"
+              data-reveal
+              data-tilt="7"
+              style={{ "--reveal-delay": "160ms" } as React.CSSProperties}
+            >
               <div className="text-muted-foreground">Entries</div>
-              <div className="tabular text-xl">{report.entryCount}</div>
+              <div className="tabular text-xl">
+                <CountUp value={report.entryCount} format={(n) => String(Math.round(n))} jump={0} />
+              </div>
             </div>
           </div>
 
           <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
-            <div className="rounded-md p-4 shadow-sm">
+            <div className="rounded-md p-4 shadow-sm" data-reveal>
               <DailyChart days={report.days} format={durationFormat} />
             </div>
-            <div className="rounded-md p-4 shadow-sm">
+            <div className="rounded-md p-4 shadow-sm" data-reveal style={{ "--reveal-delay": "100ms" } as React.CSSProperties}>
               <Breakdown report={report} format={durationFormat} />
             </div>
           </div>

@@ -4,9 +4,10 @@ import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { THEME_KEY as KEY } from "./theme-script";
 
 /**
- * Colour theme. The preference is per device (localStorage); dark is Monolith's
- * default. The resolved theme lives on <html data-theme="dark|light"> plus the
- * `dark` class that shadcn's `dark:` variants use.
+ * Theme. The preference is per device (localStorage); dark is the default.
+ * The resolved theme lives on <html data-theme="dark|light"> and picks the
+ * backdrop: a night wave (dark) or soft daylight (light). The glass panels are
+ * smoky in both, so the `dark` class shadcn's `dark:` variants use stays on.
  */
 export type ThemePreference = "dark" | "light" | "system";
 export type ResolvedTheme = "dark" | "light";
@@ -31,7 +32,7 @@ function apply(preference: ThemePreference) {
   const theme = resolve(preference);
   const root = document.documentElement;
   root.dataset.theme = theme;
-  root.classList.toggle("dark", theme === "dark");
+  root.classList.add("dark");
   window.dispatchEvent(new Event(EVENT));
 }
 

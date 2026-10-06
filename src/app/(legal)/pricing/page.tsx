@@ -71,9 +71,12 @@ export default function PricingPage() {
       </div>
 
       <ul className="grid gap-4 md:grid-cols-3">
-        {TIERS.map((tier) => (
+        {TIERS.map((tier, i) => (
           <li
             key={tier.name}
+            data-reveal
+            data-tilt="6"
+            style={{ "--reveal-delay": `${i * 90}ms` } as React.CSSProperties}
             className={cn(
               "flex flex-col gap-4 rounded-md bg-surface p-5 shadow-sm",
               tier.highlight && "shadow-[inset_0_0_0_1px_var(--brand)]",

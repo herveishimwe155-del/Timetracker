@@ -59,8 +59,15 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
           </ul>
         </nav>
         <div className="flex min-w-0 flex-col gap-12">
-          {SECTIONS.map((s) => (
-            <section key={s.id} id={s.id} aria-labelledby={`${s.id}-title`} className="flex scroll-mt-16 flex-col gap-4">
+          {SECTIONS.map((s, i) => (
+            <section
+              key={s.id}
+              id={s.id}
+              aria-labelledby={`${s.id}-title`}
+              className="flex scroll-mt-4 flex-col gap-4"
+              data-reveal
+              style={{ "--reveal-delay": `${Math.min(i, 3) * 60}ms` } as React.CSSProperties}
+            >
               <h2 id={`${s.id}-title`} className="border-b border-line pb-2 text-base font-medium">
                 {s.title}
               </h2>

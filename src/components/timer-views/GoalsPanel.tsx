@@ -38,7 +38,7 @@ export function GoalsPanel({ entries, today, week, timeZone, nowMs, durationForm
   const fmt = (ms: number) => formatDuration(Math.floor(ms / 1000), durationFormat);
 
   return (
-    <section aria-labelledby="goals-title" className="rounded-md shadow-sm">
+    <section aria-labelledby="goals-title" className="rounded-md shadow-sm" data-reveal style={{ "--reveal-delay": "120ms" } as React.CSSProperties}>
       <div className="flex items-center gap-1 px-2 py-2">
         <button
           type="button"

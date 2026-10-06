@@ -19,6 +19,7 @@ import { CalendarView } from "./CalendarView";
 import { GoalsPanel } from "./GoalsPanel";
 import { ProjectSummaryBar } from "./ProjectSummaryBar";
 import { TimesheetView } from "./TimesheetView";
+import { CountUp } from "@/components/motion/CountUp";
 
 export const VIEWS = ["calendar", "list", "timesheet"] as const;
 export type TimerView = (typeof VIEWS)[number];
@@ -131,11 +132,15 @@ export function TimerViews() {
         <dl className="flex items-baseline gap-4 text-xs text-muted-foreground uppercase">
           <div className="flex items-baseline gap-2">
             <dt>{view === "list" || anchor === today ? "Today" : shortDayLabel(anchor)}</dt>
-            <dd className="tabular text-sm text-foreground normal-case">{fmt(totals.dayMs)}</dd>
+            <dd className="tabular text-sm text-foreground normal-case">
+              <CountUp value={totals.dayMs} format={fmt} jump={1500} />
+            </dd>
           </div>
           <div className="flex items-baseline gap-2">
             <dt>Week total</dt>
-            <dd className="tabular text-sm text-foreground normal-case">{fmt(totals.weekMs)}</dd>
+            <dd className="tabular text-sm text-foreground normal-case">
+              <CountUp value={totals.weekMs} format={fmt} jump={1500} />
+            </dd>
           </div>
         </dl>
 
@@ -183,7 +188,8 @@ export function TimerViews() {
       <ProjectSummaryBar entries={weekEntries} week={week} timeZone={timeZone} nowMs={now} />
 
       <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_17rem]">
-        <div className="min-w-0">
+        {/* Keyed by view, so switching views eases the new one in. */}
+        <div key={view} className="min-w-0" data-reveal>
       {view === "list" && <EntryList />}
       {view === "calendar" && (
         <CalendarView

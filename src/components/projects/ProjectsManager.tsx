@@ -120,7 +120,7 @@ export function ProjectsManager() {
           project picker.
         </EmptyState>
       ) : (
-        <div className="overflow-x-auto rounded-md shadow-sm">
+        <div className="overflow-x-auto rounded-md shadow-sm" data-reveal>
           <table className="w-full min-w-[640px] text-left">
             <caption className="sr-only">Projects</caption>
             <thead className="text-xs text-muted-foreground uppercase">
