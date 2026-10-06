@@ -64,8 +64,14 @@ export function EntryList() {
 
   return (
     <div className="flex flex-col gap-6">
-      {listed.map((group) => (
-        <section key={group.key} aria-labelledby={`day-${group.key}`} className="rounded-md bg-surface/30 shadow-sm">
+      {listed.map((group, i) => (
+        <section
+          key={group.key}
+          aria-labelledby={`day-${group.key}`}
+          className="rounded-md bg-surface/30 shadow-sm"
+          data-reveal
+          style={{ "--reveal-delay": `${Math.min(i, 5) * 70}ms` } as React.CSSProperties}
+        >
           <header className="flex h-10 items-center justify-between border-b border-line px-3">
             <h2 id={`day-${group.key}`} className="font-medium">
               {group.label}

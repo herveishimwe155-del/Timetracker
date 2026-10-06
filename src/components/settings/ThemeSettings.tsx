@@ -4,18 +4,18 @@ import { Monitor, Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useThemePreference, type ThemePreference } from "@/lib/theme";
 import { useLocalStorageFlag } from "@/hooks/use-local-storage-flag";
-import { BACKGROUND_MOTION_KEY } from "@/components/shell/WaveBackground";
+import { MOTION_KEY } from "@/lib/theme-script";
 
 const OPTIONS: { value: ThemePreference; label: string; icon: typeof Sun; hint: string }[] = [
-  { value: "dark", label: "Dark", icon: Moon, hint: "Smoky glass" },
-  { value: "light", label: "Light", icon: Sun, hint: "Frosted glass" },
+  { value: "dark", label: "Dark", icon: Moon, hint: "Night wave" },
+  { value: "light", label: "Light", icon: Sun, hint: "Soft daylight" },
   { value: "system", label: "Match system", icon: Monitor, hint: "Follows this device" },
 ];
 
 /** Theme and background motion. Apply instantly and are saved on this device only. */
 export function ThemeSettings() {
   const [preference, setPreference] = useThemePreference();
-  const [moving, setMoving] = useLocalStorageFlag(BACKGROUND_MOTION_KEY, true);
+  const [moving, setMoving] = useLocalStorageFlag(MOTION_KEY, true);
 
   return (
     <fieldset className="flex max-w-xl flex-col gap-2">
@@ -26,6 +26,7 @@ export function ThemeSettings() {
           return (
             <label
               key={value}
+              data-tilt="6"
               className={cn(
                 "flex cursor-pointer items-center gap-3 rounded-md p-3 shadow-sm transition-colors hover:bg-surface",
                 "has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring",
@@ -57,10 +58,10 @@ export function ThemeSettings() {
           className="mt-0.5 size-4 shrink-0 accent-[var(--brand)]"
         />
         <span className="min-w-0">
-          <span className="block">Moving background</span>
+          <span className="block">Motion effects</span>
           <span className="block text-xs text-muted-foreground">
-            The blue wave drifts slowly and shifts with your pointer. Turn off to keep it still (it&apos;s always still if your
-            device asks for less motion).
+            The moving background, panels that light up and tilt under your pointer, and content that eases into
+            view. Turn off to keep everything still (it&apos;s always still if your device asks for less motion).
           </span>
         </span>
       </label>
