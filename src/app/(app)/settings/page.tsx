@@ -10,10 +10,13 @@ import { BillingSettings } from "@/components/settings/BillingSettings";
 import { billingConfigured } from "@/lib/billing/flutterwave";
 import { EntryRulesSettings } from "@/components/settings/EntryRulesSettings";
 import { ImportSettings } from "@/components/settings/ImportSettings";
+import { WorkspaceSettings } from "@/components/settings/WorkspaceSettings";
+import { loadWorkspaces } from "@/lib/workspace-server";
 
 export const metadata: Metadata = { title: "Settings" };
 
-const SECTIONS = [
+const ALL_SECTIONS = [
+  { id: "workspace", title: "Workspace" },
   { id: "appearance", title: "Appearance" },
   { id: "preferences", title: "Profile and preferences" },
   { id: "entries", title: "Time entries" },
@@ -33,8 +36,12 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
   // Guests can look around the app, but settings belong to an account.
   if (!data?.claims.sub) redirect("/login?next=/settings");
   const email = typeof data?.claims.email === "string" ? data.claims.email : null;
+  // The Workspace section only shows while you're in a team workspace.
+  const { current } = await loadWorkspaces(supabase, data.claims.sub);
+  const SECTIONS = ALL_SECTIONS.filter((s) => s.id !== "workspace" || current);
 
-  const content: Record<(typeof SECTIONS)[number]["id"], React.ReactNode> = {
+  const content: Record<(typeof ALL_SECTIONS)[number]["id"], React.ReactNode> = {
+    workspace: <WorkspaceSettings />,
     appearance: <ThemeSettings />,
     preferences: <SettingsForm />,
     entries: <EntryRulesSettings />,

@@ -1,4 +1,4 @@
-import { BarChart3, Briefcase, Clock, FolderKanban, LayoutDashboard, Settings, Tag, Target, type LucideIcon } from "lucide-react";
+import { BarChart3, Briefcase, Clock, FolderKanban, LayoutDashboard, Settings, Tag, Target, Users, type LucideIcon } from "lucide-react";
 
 export type NavItem = {
   href: string;
@@ -23,6 +23,7 @@ export const navSections: NavSection[] = [
     items: [
       { href: "/projects", label: "Projects", icon: FolderKanban },
       { href: "/clients", label: "Clients", icon: Briefcase },
+      { href: "/members", label: "Members", icon: Users },
       { href: "/tags", label: "Tags", icon: Tag },
       { href: "/goals", label: "Goals", icon: Target },
     ],

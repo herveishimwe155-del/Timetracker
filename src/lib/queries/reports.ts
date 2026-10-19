@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { fetchAllPages } from "@/lib/supabase/paginate";
 import { rangeInstants, type DayRange } from "@/lib/reports";
 import { guestQuery, useIsGuest } from "@/lib/guest";
+import { inSpace, useWorkspace } from "@/lib/workspace";
 
 /**
  * Every entry that overlaps the range (the running one included), with its tags.
@@ -12,6 +13,7 @@ import { guestQuery, useIsGuest } from "@/lib/guest";
  */
 export function useReportEntries(range: DayRange, timeZone: string) {
   const guest = useIsGuest();
+  const { userId, workspaceId } = useWorkspace();
   return useQuery({
     ...guestQuery(guest, []),
     // Under "entries" so Realtime changes and entry edits refresh reports too.
@@ -22,9 +24,13 @@ export function useReportEntries(range: DayRange, timeZone: string) {
       const to = new Date(toMs).toISOString();
       const supabase = createClient();
       return fetchAllPages((first, last) =>
-        supabase
-          .from("time_entries")
-          .select("id, start_at, stop_at, description, project_id, billable, time_entry_tags(tag_id)")
+        inSpace(
+          supabase
+            .from("time_entries")
+            .select("id, start_at, stop_at, description, project_id, billable, time_entry_tags(tag_id)")
+            .eq("user_id", userId ?? ""),
+          workspaceId,
+        )
           .lt("start_at", to)
           .or(`stop_at.is.null,stop_at.gt.${from}`)
           .order("start_at")

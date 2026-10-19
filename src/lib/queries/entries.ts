@@ -18,6 +18,7 @@ import { fetchAllPages } from "@/lib/supabase/paginate";
 import { rangeInstants, type DayRange } from "@/lib/reports";
 import { addDaysToKey, dayKey, wallTimeToInstant } from "@/lib/time";
 import { guestQuery, useIsGuest } from "@/lib/guest";
+import { inSpace, useWorkspace } from "@/lib/workspace";
 
 /** An entry with the ids of its tags. */
 export type Entry = Tables<"time_entries"> & { time_entry_tags: { tag_id: string }[] };
@@ -59,6 +60,7 @@ export function entryErrorMessage(error: unknown): string {
 /** The running timer, or null. */
 export function useRunningEntry() {
   const guest = useIsGuest();
+  const { userId } = useWorkspace();
   return useQuery({
     ...guestQuery(guest, null),
     queryKey: entryKeys.running,
@@ -67,6 +69,8 @@ export function useRunningEntry() {
         .from("time_entries")
         .select(ENTRY_SELECT)
         .is("stop_at", null)
+        // Admins can read teammates' entries; the timer is always your own.
+        .eq("user_id", userId ?? "")
         .maybeSingle();
       if (error) throw error;
       return data;
@@ -80,6 +84,7 @@ export function useRunningEntry() {
  */
 export function useEntryPages(timeZone: string) {
   const guest = useIsGuest();
+  const { userId, workspaceId } = useWorkspace();
   return useInfiniteQuery({
     // One empty page with nothing older (its endKey is never read).
     ...guestQuery(guest, {
@@ -96,14 +101,12 @@ export function useEntryPages(timeZone: string) {
       const to = wallTimeToInstant(endKey, "00:00", timeZone).toISOString();
 
       const [page, older] = await Promise.all([
-        supabase
-          .from("time_entries")
-          .select(ENTRY_SELECT)
+        inSpace(supabase.from("time_entries").select(ENTRY_SELECT).eq("user_id", userId ?? ""), workspaceId)
           .not("stop_at", "is", null)
           .gte("start_at", from)
           .lt("start_at", to)
           .order("start_at", { ascending: false }),
-        supabase.from("time_entries").select("id").lt("start_at", from).limit(1),
+        inSpace(supabase.from("time_entries").select("id").eq("user_id", userId ?? ""), workspaceId).lt("start_at", from).limit(1),
       ]);
       if (page.error) throw page.error;
       if (older.error) throw older.error;
@@ -122,6 +125,8 @@ const REALTIME_TABLES = {
   tags: [["tags"]],
   goals: [["goals"]],
   subscriptions: [["plan"]],
+  workspaces: [["workspace-members"]],
+  workspace_members: [["workspace-members"]],
 } as const;
 
 /**
@@ -130,6 +135,7 @@ const REALTIME_TABLES = {
  */
 export function useRangeEntries(range: DayRange, timeZone: string) {
   const guest = useIsGuest();
+  const { userId, workspaceId } = useWorkspace();
   return useQuery({
     ...guestQuery(guest, []),
     queryKey: entryKeys.range(timeZone, range),
@@ -137,9 +143,7 @@ export function useRangeEntries(range: DayRange, timeZone: string) {
       const { fromMs, toMs } = rangeInstants(range, timeZone);
       const supabase = createClient();
       return fetchAllPages<Entry>((first, last) =>
-        supabase
-          .from("time_entries")
-          .select(ENTRY_SELECT)
+        inSpace(supabase.from("time_entries").select(ENTRY_SELECT).eq("user_id", userId ?? ""), workspaceId)
           .lt("start_at", new Date(toMs).toISOString())
           .or(`stop_at.is.null,stop_at.gt.${new Date(fromMs).toISOString()}`)
           .order("start_at")
@@ -154,6 +158,7 @@ export function useRangeEntries(range: DayRange, timeZone: string) {
 /** Keeps entries, projects, clients and tags in sync with other tabs and devices. */
 export function useRealtimeSync() {
   const queryClient = useQueryClient();
+  const { workspaceId } = useWorkspace();
 
   useEffect(() => {
     const supabase = createClient();
@@ -171,29 +176,33 @@ export function useRealtimeSync() {
 
     // A database trigger broadcasts { table } to the private topic "user:<id>";
     // only that user may join it (RLS on realtime.messages).
-    let channel: ReturnType<typeof supabase.channel> | undefined;
+    const channels: ReturnType<typeof supabase.channel>[] = [];
     let cancelled = false;
+    const listen = (topic: string) =>
+      supabase
+        .channel(topic, { config: { private: true } })
+        .on("broadcast", { event: "change" }, ({ payload }) => {
+          const table = payload?.table as string | undefined;
+          if (table && table in REALTIME_TABLES) refresh(table as keyof typeof REALTIME_TABLES);
+        })
+        .subscribe();
     (async () => {
       const { data } = await supabase.auth.getClaims();
       const userId = data?.claims.sub;
       if (!userId || cancelled) return;
       await supabase.realtime.setAuth();
       if (cancelled) return;
-      channel = supabase
-        .channel(`user:${userId}`, { config: { private: true } })
-        .on("broadcast", { event: "change" }, ({ payload }) => {
-          const table = payload?.table as string | undefined;
-          if (table && table in REALTIME_TABLES) refresh(table as keyof typeof REALTIME_TABLES);
-        })
-        .subscribe();
+      channels.push(listen(`user:${userId}`));
+      // Teammates' changes to shared projects, clients and tags arrive on the workspace topic.
+      if (workspaceId) channels.push(listen(`workspace:${workspaceId}`));
     })();
 
     return () => {
       cancelled = true;
       window.clearTimeout(timeout);
-      if (channel) supabase.removeChannel(channel);
+      channels.forEach((c) => supabase.removeChannel(c));
     };
-  }, [queryClient]);
+  }, [queryClient, workspaceId]);
 }
 
 /* ---------- Cache helpers for optimistic updates ---------- */
@@ -221,6 +230,7 @@ function restore(client: QueryClient, saved: Awaited<ReturnType<typeof snapshot>
 const tempEntry = (fields: Partial<Entry>): Entry => ({
   id: `temp-${crypto.randomUUID()}`,
   user_id: "",
+  workspace_id: null,
   created_at: new Date().toISOString(),
   description: "",
   project_id: null,
@@ -239,6 +249,7 @@ type EntryUpdate = { id: string; changes: TablesUpdate<"time_entries">; tagIds?:
 export function useEntryActions() {
   const client = useQueryClient();
   const settle = () => client.invalidateQueries({ queryKey: entryKeys.all });
+  const { workspaceId } = useWorkspace();
 
   const start = useMutation({
     mutationFn: async (fields: Partial<EntryFields>) => {
@@ -247,6 +258,7 @@ export function useEntryActions() {
         p_project_id: fields.project_id ?? undefined,
         p_billable: fields.billable ?? false,
         p_tag_ids: fields.tag_ids ?? [],
+        p_workspace_id: workspaceId ?? undefined,
       });
       if (error) throw error;
       return { ...data, time_entry_tags: tagRows(fields.tag_ids) } satisfies Entry;
@@ -324,7 +336,11 @@ export function useEntryActions() {
   const create = useMutation({
     mutationFn: async ({ tagIds, ...entry }: TablesInsert<"time_entries"> & { tagIds?: string[] }) => {
       const supabase = createClient();
-      const { data, error } = await supabase.from("time_entries").insert(entry).select("id").single();
+      const { data, error } = await supabase
+        .from("time_entries")
+        .insert({ ...entry, workspace_id: workspaceId })
+        .select("id")
+        .single();
       if (error) throw error;
       if (tagIds?.length) {
         const tags = await supabase.rpc("set_entry_tags", { p_entry_id: data.id, p_tag_ids: tagIds });

@@ -12,6 +12,7 @@ type TimeEntryRow = {
   start_at: string;
   stop_at: string | null;
   user_id: string;
+  workspace_id: string | null;
 };
 
 export type Database = {
@@ -21,9 +22,9 @@ export type Database = {
   public: {
     Tables: {
       clients: {
-        Row: { archived: boolean; created_at: string; id: string; name: string; user_id: string };
-        Insert: { archived?: boolean; created_at?: string; id?: string; name: string; user_id?: string };
-        Update: { archived?: boolean; created_at?: string; id?: string; name?: string; user_id?: string };
+        Row: { archived: boolean; created_at: string; id: string; name: string; user_id: string; workspace_id: string | null };
+        Insert: { archived?: boolean; created_at?: string; id?: string; name: string; user_id?: string; workspace_id?: string | null };
+        Update: { archived?: boolean; created_at?: string; id?: string; name?: string; user_id?: string; workspace_id?: string | null };
         Relationships: [];
       };
       billing_payments: {
@@ -55,6 +56,55 @@ export type Database = {
           status?: string;
           updated_at?: string;
         };
+        Relationships: [];
+      };
+      workspaces: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          members_create_projects: boolean;
+          members_create_tags: boolean;
+          members_see_activity: boolean;
+          name: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          members_create_projects?: boolean;
+          members_create_tags?: boolean;
+          members_see_activity?: boolean;
+          name: string;
+        };
+        Update: {
+          members_create_projects?: boolean;
+          members_create_tags?: boolean;
+          members_see_activity?: boolean;
+          name?: string;
+        };
+        Relationships: [];
+      };
+      workspace_members: {
+        Row: { joined_at: string; role: string; user_id: string; workspace_id: string };
+        Insert: never;
+        Update: { role?: string };
+        Relationships: [];
+      };
+      workspace_invites: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          expires_at: string;
+          id: string;
+          revoked: boolean;
+          role: string;
+          token_hash: string;
+          uses: number;
+          workspace_id: string;
+        };
+        Insert: { role?: string; token_hash: string; workspace_id: string; expires_at?: string };
+        Update: { revoked?: boolean };
         Relationships: [];
       };
       goals: {
@@ -148,6 +198,7 @@ export type Database = {
           id: string;
           name: string;
           user_id: string;
+          workspace_id: string | null;
         };
         Insert: {
           archived?: boolean;
@@ -158,6 +209,7 @@ export type Database = {
           id?: string;
           name: string;
           user_id?: string;
+          workspace_id?: string | null;
         };
         Update: {
           archived?: boolean;
@@ -168,6 +220,7 @@ export type Database = {
           id?: string;
           name?: string;
           user_id?: string;
+          workspace_id?: string | null;
         };
         Relationships: [
           {
@@ -180,9 +233,9 @@ export type Database = {
         ];
       };
       tags: {
-        Row: { id: string; name: string; user_id: string };
-        Insert: { id?: string; name: string; user_id?: string };
-        Update: { id?: string; name?: string; user_id?: string };
+        Row: { id: string; name: string; user_id: string; workspace_id: string | null };
+        Insert: { id?: string; name: string; user_id?: string; workspace_id?: string | null };
+        Update: { id?: string; name?: string; user_id?: string; workspace_id?: string | null };
         Relationships: [];
       };
       time_entries: {
@@ -196,6 +249,7 @@ export type Database = {
           start_at: string;
           stop_at?: string | null;
           user_id?: string;
+          workspace_id?: string | null;
         };
         Update: {
           billable?: boolean;
@@ -206,6 +260,7 @@ export type Database = {
           start_at?: string;
           stop_at?: string | null;
           user_id?: string;
+          workspace_id?: string | null;
         };
         Relationships: [
           {
@@ -253,7 +308,16 @@ export type Database = {
         Returns: string;
       };
       current_plan: { Args: never; Returns: string };
+      accept_invite: { Args: { p_token: string }; Returns: string };
       delete_my_account: { Args: never; Returns: undefined };
+      invite_preview: {
+        Args: { p_token: string };
+        Returns: { workspace_name: string; role: string; valid: boolean }[];
+      };
+      workspace_member_list: {
+        Args: { p_workspace: string };
+        Returns: { user_id: string; role: string; joined_at: string; full_name: string | null; email: string }[];
+      };
       project_stats: {
         Args: never;
         Returns: { project_id: string; tracked_seconds: number; last_tracked_at: string; entry_count: number }[];
@@ -269,7 +333,13 @@ export type Database = {
         Returns: undefined;
       };
       start_timer: {
-        Args: { p_billable?: boolean; p_description?: string; p_project_id?: string; p_tag_ids?: string[] };
+        Args: {
+          p_billable?: boolean;
+          p_description?: string;
+          p_project_id?: string;
+          p_tag_ids?: string[];
+          p_workspace_id?: string;
+        };
         Returns: TimeEntryRow;
         SetofOptions: { from: "*"; to: "time_entries"; isOneToOne: true; isSetofReturn: false };
       };
