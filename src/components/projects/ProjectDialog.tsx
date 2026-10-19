@@ -20,19 +20,36 @@ import { catalogErrorMessage, useClients, useProjectActions, useProjects, type P
 
 export type ProjectDialogTarget = { mode: "create" } | { mode: "edit"; project: Project };
 
-export function ProjectDialog({ target, onClose }: { target: ProjectDialogTarget | null; onClose: () => void }) {
+export function ProjectDialog({
+  target,
+  onClose,
+  onCreated,
+}: {
+  target: ProjectDialogTarget | null;
+  onClose: () => void;
+  /** Called with the new project's id after creating one (e.g. to select it). */
+  onCreated?: (id: string) => void;
+}) {
   return (
     <Dialog open={target !== null} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-md">
         {target && (
-          <ProjectForm key={target.mode === "edit" ? target.project.id : "new"} target={target} onDone={onClose} />
+          <ProjectForm key={target.mode === "edit" ? target.project.id : "new"} target={target} onDone={onClose} onCreated={onCreated} />
         )}
       </DialogContent>
     </Dialog>
   );
 }
 
-function ProjectForm({ target, onDone }: { target: ProjectDialogTarget; onDone: () => void }) {
+function ProjectForm({
+  target,
+  onDone,
+  onCreated,
+}: {
+  target: ProjectDialogTarget;
+  onDone: () => void;
+  onCreated?: (id: string) => void;
+}) {
   const { data: clients = [] } = useClients();
   const { data: projects = [] } = useProjects();
   const { create, update } = useProjectActions();
@@ -57,8 +74,9 @@ function ProjectForm({ target, onDone }: { target: ProjectDialogTarget; onDone: 
         await update.mutateAsync({ id: editing.id, changes: values });
         toast.success("Project updated");
       } else {
-        await create.mutateAsync(values);
+        const project = await create.mutateAsync(values);
         toast.success(`Project “${trimmed}” created`);
+        onCreated?.(project.id);
       }
       onDone();
     } catch (e) {
