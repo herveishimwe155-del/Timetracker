@@ -50,6 +50,8 @@ export async function GET(request: NextRequest) {
         supabase
           .from("time_entries")
           .select("id, start_at, stop_at, description, project_id, billable, time_entry_tags(tag_id)")
+          // Your own entries only (workspace admins can read teammates' entries too).
+          .eq("user_id", auth.claims.sub)
           .not("stop_at", "is", null)
           .gte("start_at", new Date(fromMs).toISOString())
           .lt("start_at", new Date(toMs).toISOString())

@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/client";
 import type { ImportProblem, ImportRow } from "@/lib/csv-import";
 import { nextProjectColor } from "@/lib/project-colors";
+import { inSpace } from "@/lib/workspace";
 import { entryErrorMessage } from "./entries";
 
 export type ImportResult = { imported: number; problems: ImportProblem[]; notes: string[] };
@@ -15,15 +16,19 @@ const CHUNK = 50;
  * existing ones by name, ignoring case), then the entries in batches. A batch that
  * fails is retried row by row, so one bad row (an overlap, a locked day) only skips itself.
  */
-export async function runImport(rows: ImportRow[], onProgress: (done: number) => void): Promise<ImportResult> {
+export async function runImport(
+  rows: ImportRow[],
+  onProgress: (done: number) => void,
+  workspaceId: string | null,
+): Promise<ImportResult> {
   const supabase = createClient();
   const problems: ImportProblem[] = [];
   const notes: string[] = [];
 
   const [clientsRes, projectsRes, tagsRes] = await Promise.all([
-    supabase.from("clients").select("id, name"),
-    supabase.from("projects").select("id, name, client_id, color"),
-    supabase.from("tags").select("id, name"),
+    inSpace(supabase.from("clients").select("id, name"), workspaceId),
+    inSpace(supabase.from("projects").select("id, name, client_id, color"), workspaceId),
+    inSpace(supabase.from("tags").select("id, name"), workspaceId),
   ]);
   if (clientsRes.error) throw clientsRes.error;
   if (projectsRes.error) throw projectsRes.error;
@@ -33,7 +38,7 @@ export async function runImport(rows: ImportRow[], onProgress: (done: number) =>
   const clients = new Map(clientsRes.data.map((c) => [key(c.name), c.id]));
   for (const name of new Set(rows.map((r) => r.client).filter((n): n is string => !!n))) {
     if (clients.has(key(name))) continue;
-    const { data, error } = await supabase.from("clients").insert({ name: name.slice(0, 200) }).select("id").single();
+    const { data, error } = await supabase.from("clients").insert({ name: name.slice(0, 200), workspace_id: workspaceId }).select("id").single();
     if (error) notes.push(`Client “${name}” couldn't be created; its projects were imported without a client.`);
     else clients.set(key(name), data.id);
   }
@@ -51,7 +56,7 @@ export async function runImport(rows: ImportRow[], onProgress: (done: number) =>
     const color = nextProjectColor(colors);
     const { data, error } = await supabase
       .from("projects")
-      .insert({ name: row.project.slice(0, 200), client_id: clientId, color })
+      .insert({ name: row.project.slice(0, 200), client_id: clientId, color, workspace_id: workspaceId })
       .select("id")
       .single();
     if (error) {
@@ -70,7 +75,7 @@ export async function runImport(rows: ImportRow[], onProgress: (done: number) =>
   const tags = new Map(tagsRes.data.map((t) => [key(t.name), t.id]));
   for (const name of new Set(rows.flatMap((r) => r.tags))) {
     if (tags.has(key(name))) continue;
-    const { data, error } = await supabase.from("tags").insert({ name: name.slice(0, 100) }).select("id").single();
+    const { data, error } = await supabase.from("tags").insert({ name: name.slice(0, 100), workspace_id: workspaceId }).select("id").single();
     if (error) notes.push(`Tag “${name}” couldn't be created and was left off its entries.`);
     else tags.set(key(name), data.id);
   }
@@ -84,6 +89,7 @@ export async function runImport(rows: ImportRow[], onProgress: (done: number) =>
       billable: r.billable,
       start_at: r.startAt.toISOString(),
       stop_at: r.stopAt.toISOString(),
+      workspace_id: workspaceId,
     };
   };
   const tagIdsOf = (r: ImportRow) => r.tags.map((t) => tags.get(key(t))).filter((id): id is string => !!id);

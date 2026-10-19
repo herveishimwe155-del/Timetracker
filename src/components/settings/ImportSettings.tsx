@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { readImport, type ImportProblem, type ImportRow } from "@/lib/csv-import";
 import { runImport, type ImportResult } from "@/lib/queries/import";
 import { useSettings } from "@/lib/queries/profile";
+import { useWorkspace } from "@/lib/workspace";
 import { dayKey } from "@/lib/time";
 
 const MAX_BYTES = 10 * 1024 * 1024;
@@ -15,6 +16,7 @@ const MAX_BYTES = 10 * 1024 * 1024;
 /** Settings → Import: time entries from a Tickr or Toggl CSV export. */
 export function ImportSettings() {
   const { timeZone } = useSettings();
+  const { workspace, workspaceId } = useWorkspace();
   const queryClient = useQueryClient();
   const [file, setFile] = useState<{ name: string; rows: ImportRow[]; problems: ImportProblem[] } | null>(null);
   const [progress, setProgress] = useState<number | null>(null);
@@ -34,7 +36,7 @@ export function ImportSettings() {
     if (!file) return;
     setProgress(0);
     try {
-      const outcome = await runImport(file.rows, setProgress);
+      const outcome = await runImport(file.rows, setProgress, workspaceId);
       setResult({ ...outcome, problems: [...file.problems, ...outcome.problems].sort((a, b) => a.line - b.line) });
       setFile(null);
       toast.success(`${outcome.imported} ${outcome.imported === 1 ? "entry" : "entries"} imported`);
@@ -80,6 +82,7 @@ export function ImportSettings() {
                 {newNames((r) => r.tags)} tags named
               </li>
               <li>Times are read in your time zone, {timeZone}.</li>
+              <li>Imported into {workspace ? `the ${workspace.name} workspace` : "your personal space"}.</li>
             </ul>
           ) : (
             <p className="text-danger">No entries could be read from this file.</p>

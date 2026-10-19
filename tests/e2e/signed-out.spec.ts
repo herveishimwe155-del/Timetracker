@@ -109,3 +109,18 @@ test.describe("guest mode: Toggl pages", () => {
     await expect(page).toHaveURL(/\/login\?mode=signup/);
   });
 });
+
+test.describe("guest mode: workspaces", () => {
+  test("Members explains workspaces and asks guests to sign up to create one", async ({ page }) => {
+    await page.goto("/members");
+    await expect(page.getByText("Members are for team workspaces")).toBeVisible();
+    await expectAccessible(page);
+    await page.getByRole("button", { name: "Create a workspace" }).click();
+    await expect(page).toHaveURL(/\/login\?mode=signup&next=%2Fmembers/);
+  });
+
+  test("an invite link sends signed-out visitors to sign in, then back to the invite", async ({ page }) => {
+    await page.goto("/join/some-token");
+    await expect(page).toHaveURL(/\/login\?next=%2Fjoin%2Fsome-token/);
+  });
+});

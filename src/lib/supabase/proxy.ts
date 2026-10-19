@@ -6,7 +6,7 @@ import { supabaseEnv } from "./env";
 const PUBLIC_PATHS = ["/login", "/auth", "/privacy", "/terms", "/pricing", "/api/billing/webhook"];
 
 /** App pages guests may look around in (empty) before signing up. Settings needs an account. */
-const GUEST_PATHS = ["/overview", "/timer", "/projects", "/clients", "/tags", "/goals", "/reports"];
+const GUEST_PATHS = ["/overview", "/timer", "/projects", "/clients", "/members", "/tags", "/goals", "/reports"];
 
 const isPublic = (pathname: string) =>
   pathname === "/" ||

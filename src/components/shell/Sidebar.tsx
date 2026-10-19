@@ -12,6 +12,7 @@ import { signUpUrl } from "@/lib/guest";
 import { useResolvedTheme, useThemePreference } from "@/lib/theme";
 import { APP_NAME, LogoMark } from "./Logo";
 import { footerNav, navSections, type NavItem } from "./nav";
+import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 
 function NavLink({ item, active, collapsed }: { item: NavItem; active: boolean; collapsed: boolean }) {
   const Icon = item.icon;
@@ -73,6 +74,12 @@ export function Sidebar({ email, guest = false }: { email: string | null; guest?
         <LogoMark />
         {!collapsed && <span className="hidden truncate font-semibold tracking-tight md:inline">{APP_NAME}</span>}
       </div>
+
+      {!guest && (
+        <div className="border-b border-line p-2">
+          <WorkspaceSwitcher collapsed={collapsed} />
+        </div>
+      )}
 
       <nav aria-label="Main" className="flex flex-1 flex-col gap-3 overflow-y-auto p-2">
         {navSections.map((section) => (

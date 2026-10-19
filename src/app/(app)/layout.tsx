@@ -7,6 +7,8 @@ import { GuestBanner } from "@/components/shell/GuestBanner";
 import { TimerBar } from "@/components/timer/TimerBar";
 import { GuestProvider } from "@/lib/guest";
 import { createClient } from "@/lib/supabase/server";
+import { WorkspaceProvider } from "@/lib/workspace";
+import { loadWorkspaces } from "@/lib/workspace-server";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   // Signed-out visitors get guest mode: the app, empty, until they try to save
@@ -21,11 +23,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     const { data: ok } = await supabase.rpc("session_assurance_ok");
     if (ok === false) redirect("/verify");
   }
+  const { workspaces, current } = userId ? await loadWorkspaces(supabase, userId) : { workspaces: [], current: null };
+  const workspaceId = current?.id ?? null;
 
   return (
     <MonitoringProvider userId={userId}>
       <GuestProvider guest={guest}>
-        <QueryProvider key={userId ?? "guest"} guest={guest}>
+        <WorkspaceProvider value={{ userId, workspaceId, workspace: current, workspaces }}>
+        {/* Keyed by user and space, so switching workspace starts from a fresh cache. */}
+        <QueryProvider key={`${userId ?? "guest"}:${workspaceId ?? "personal"}`} guest={guest}>
           <AppCommandsProvider>
             <a
               href="#main"
@@ -46,6 +52,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             </div>
           </AppCommandsProvider>
         </QueryProvider>
+        </WorkspaceProvider>
       </GuestProvider>
     </MonitoringProvider>
   );

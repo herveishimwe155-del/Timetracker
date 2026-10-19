@@ -8,6 +8,7 @@ import { track } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
 import type { Tables, TablesInsert, TablesUpdate } from "@/lib/supabase/database.types";
 import { guestQuery, useIsGuest } from "@/lib/guest";
+import { inSpace, useWorkspace } from "@/lib/workspace";
 
 export type Client = Tables<"clients">;
 export type Project = Tables<"projects">;
@@ -28,6 +29,7 @@ export function catalogErrorMessage(error: unknown, what: "client" | "project" |
       : `A ${what} with this name already exists.`;
   }
   if (e?.code === "23514") return `Give the ${what} a name.`;
+  if (e?.code === "42501") return `Only this workspace's admins can create or change ${what}s. Ask an admin.`;
   if (e?.code === "TK402")
     return "The Free plan includes up to 10 active projects. Archive one, or upgrade in Settings → Plan and billing.";
   return `Something went wrong saving the ${what}. Try again.`;
@@ -39,11 +41,12 @@ const byName = <T extends { name: string }>(a: T, b: T) => a.name.localeCompare(
 
 export function useClients() {
   const guest = useIsGuest();
+  const { workspaceId } = useWorkspace();
   return useQuery({
     ...guestQuery(guest, []),
     queryKey: catalogKeys.clients,
     queryFn: async () => {
-      const { data, error } = await createClient().from("clients").select("*");
+      const { data, error } = await inSpace(createClient().from("clients").select("*"), workspaceId);
       if (error) throw error;
       return data.sort(byName);
     },
@@ -52,11 +55,12 @@ export function useClients() {
 
 export function useProjects() {
   const guest = useIsGuest();
+  const { workspaceId } = useWorkspace();
   return useQuery({
     ...guestQuery(guest, []),
     queryKey: catalogKeys.projects,
     queryFn: async () => {
-      const { data, error } = await createClient().from("projects").select("*");
+      const { data, error } = await inSpace(createClient().from("projects").select("*"), workspaceId);
       if (error) throw error;
       return data.sort(byName);
     },
@@ -65,11 +69,12 @@ export function useProjects() {
 
 export function useTags() {
   const guest = useIsGuest();
+  const { workspaceId } = useWorkspace();
   return useQuery({
     ...guestQuery(guest, []),
     queryKey: catalogKeys.tags,
     queryFn: async () => {
-      const { data, error } = await createClient().from("tags").select("*");
+      const { data, error } = await inSpace(createClient().from("tags").select("*"), workspaceId);
       if (error) throw error;
       return data.sort(byName);
     },
@@ -107,8 +112,13 @@ function useCatalogWrite<TVars, TResult>(
 }
 
 export function useClientActions() {
+  const { workspaceId } = useWorkspace();
   const create = useCatalogWrite(catalogKeys.clients, "client", async (values: TablesInsert<"clients">) => {
-    const { data, error } = await createClient().from("clients").insert(values).select().single();
+    const { data, error } = await createClient()
+      .from("clients")
+      .insert({ ...values, workspace_id: workspaceId })
+      .select()
+      .single();
     if (error) throw error;
     track("client_created");
     return data;
@@ -126,8 +136,13 @@ export function useClientActions() {
 }
 
 export function useProjectActions() {
+  const { workspaceId } = useWorkspace();
   const create = useCatalogWrite(catalogKeys.projects, "project", async (values: TablesInsert<"projects">) => {
-    const { data, error } = await createClient().from("projects").insert(values).select().single();
+    const { data, error } = await createClient()
+      .from("projects")
+      .insert({ ...values, workspace_id: workspaceId })
+      .select()
+      .single();
     if (error) throw error;
     track("project_created", { has_client: data.client_id !== null });
     return data;
@@ -145,8 +160,9 @@ export function useProjectActions() {
 }
 
 export function useTagActions() {
+  const { workspaceId } = useWorkspace();
   const create = useCatalogWrite(catalogKeys.tags, "tag", async (name: string) => {
-    const { data, error } = await createClient().from("tags").insert({ name }).select().single();
+    const { data, error } = await createClient().from("tags").insert({ name, workspace_id: workspaceId }).select().single();
     if (error) throw error;
     track("tag_created");
     return data;
