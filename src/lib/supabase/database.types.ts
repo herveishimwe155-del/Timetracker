@@ -93,6 +93,13 @@ export type Database = {
           duration_format: string;
           full_name: string | null;
           id: string;
+          lock_before: string | null;
+          max_tags: number | null;
+          require_description: boolean;
+          require_project: boolean;
+          require_tags: boolean;
+          show_times: boolean;
+          show_timesheet: boolean;
           time_format: string;
           time_zone: string;
           week_start: number;
@@ -102,6 +109,13 @@ export type Database = {
           duration_format?: string;
           full_name?: string | null;
           id: string;
+          lock_before?: string | null;
+          max_tags?: number | null;
+          require_description?: boolean;
+          require_project?: boolean;
+          require_tags?: boolean;
+          show_times?: boolean;
+          show_timesheet?: boolean;
           time_format?: string;
           time_zone?: string;
           week_start?: number;
@@ -111,6 +125,13 @@ export type Database = {
           duration_format?: string;
           full_name?: string | null;
           id?: string;
+          lock_before?: string | null;
+          max_tags?: number | null;
+          require_description?: boolean;
+          require_project?: boolean;
+          require_tags?: boolean;
+          show_times?: boolean;
+          show_timesheet?: boolean;
           time_format?: string;
           time_zone?: string;
           week_start?: number;
@@ -238,6 +259,10 @@ export type Database = {
         Returns: { project_id: string; tracked_seconds: number; last_tracked_at: string; entry_count: number }[];
       };
       server_now: { Args: never; Returns: string };
+      tag_stats: {
+        Args: never;
+        Returns: { tag_id: string; entry_count: number; tracked_seconds: number; last_used_at: string }[];
+      };
       session_assurance_ok: { Args: never; Returns: boolean };
       set_entry_tags: {
         Args: { p_entry_id: string; p_tag_ids: string[] };

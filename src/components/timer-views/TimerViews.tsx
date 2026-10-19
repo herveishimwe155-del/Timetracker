@@ -2,14 +2,14 @@
 
 import { useCallback, useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, PanelRightClose, PanelRightOpen, Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { NewEntryButton } from "@/components/entries/NewEntryButton";
 import { EntryList } from "@/components/entries/EntryList";
 import { useNow } from "@/lib/queries/clock";
 import { useRangeEntries } from "@/lib/queries/entries";
-import { useSettings } from "@/lib/queries/profile";
+import { useEntryRules, useSettings } from "@/lib/queries/profile";
 import { useIsClient } from "@/hooks/use-is-client";
 import { useLocalStorageFlag } from "@/hooks/use-local-storage-flag";
 import { addDaysToKey, dayKey, dayLabel, formatDuration, shortDayLabel } from "@/lib/time";
@@ -20,6 +20,8 @@ import { GoalsPanel } from "./GoalsPanel";
 import { ProjectSummaryBar } from "./ProjectSummaryBar";
 import { TimesheetView } from "./TimesheetView";
 import { CountUp } from "@/components/motion/CountUp";
+import Link from "next/link";
+import { NativeSelect } from "@/components/ui/native-select";
 
 export const VIEWS = ["calendar", "list", "timesheet"] as const;
 export type TimerView = (typeof VIEWS)[number];
@@ -35,10 +37,15 @@ export function TimerViews() {
   const now = useNow(1000);
   const today = dayKey(now, timeZone);
   const [weekMode, setWeekMode] = useLocalStorageFlag("calendar-week-view", false);
+  const [sidePanel, setSidePanel] = useLocalStorageFlag("timer-side-panel", true);
+  const { showTimesheet } = useEntryRules();
+  const views = showTimesheet ? VIEWS : VIEWS.filter((v) => v !== "timesheet");
 
-  const view: TimerView = (VIEWS as readonly string[]).includes(params.get("view") ?? "")
-    ? (params.get("view") as TimerView)
-    : "list";
+  const requested = params.get("view") ?? "";
+  const view: TimerView =
+    (VIEWS as readonly string[]).includes(requested) && (requested !== "timesheet" || showTimesheet)
+      ? (requested as TimerView)
+      : "list";
   const dateParam = params.get("date");
   const anchor = dateParam && KEY_PATTERN.test(dateParam) ? dateParam : today;
 
@@ -146,27 +153,20 @@ export function TimerViews() {
 
         <div className="ml-auto flex flex-wrap items-center gap-2">
           {view === "calendar" && (
-            <div className="flex rounded-md p-0.5 shadow-sm" role="group" aria-label="Calendar range">
-              {[false, true].map((week) => (
-                <button
-                  key={String(week)}
-                  type="button"
-                  aria-pressed={weekMode === week}
-                  onClick={() => setWeekMode(week)}
-                  className={cn(
-                    "rounded-sm px-2.5 py-1 text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring",
-                    weekMode === week && "bg-surface-2 text-foreground",
-                  )}
-                >
-                  {week ? "Week" : "Day"}
-                </button>
-              ))}
-            </div>
+            <NativeSelect
+              aria-label="Calendar range"
+              value={weekMode ? "week" : "day"}
+              onChange={(e) => setWeekMode(e.target.value === "week")}
+              className="h-8 w-32"
+            >
+              <option value="day">Day view</option>
+              <option value="week">Week view</option>
+            </NativeSelect>
           )}
 
           {/* View switch */}
           <div className="flex rounded-md p-0.5 shadow-sm" role="group" aria-label="View">
-            {VIEWS.map((v) => (
+            {views.map((v) => (
               <button
                 key={v}
                 type="button"
@@ -182,12 +182,27 @@ export function TimerViews() {
             ))}
           </div>
           <NewEntryButton />
+          <Button variant="ghost" size="icon-sm" asChild>
+            <Link href="/settings#entries" aria-label="Time entry settings" title="Time entry settings">
+              <Settings2 />
+            </Link>
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-pressed={sidePanel}
+            aria-label={sidePanel ? "Hide side panel" : "Show side panel"}
+            title={sidePanel ? "Hide side panel" : "Show side panel"}
+            onClick={() => setSidePanel(!sidePanel)}
+          >
+            {sidePanel ? <PanelRightClose /> : <PanelRightOpen />}
+          </Button>
         </div>
       </div>
 
       <ProjectSummaryBar entries={weekEntries} week={week} timeZone={timeZone} nowMs={now} />
 
-      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_17rem]">
+      <div className={cn("grid items-start gap-4", sidePanel && "xl:grid-cols-[minmax(0,1fr)_17rem]")}>
         {/* Keyed by view, so switching views eases the new one in. */}
         <div key={view} className="min-w-0" data-reveal>
       {view === "list" && <EntryList />}
@@ -206,14 +221,16 @@ export function TimerViews() {
         <TimesheetView week={week} entries={weekEntries} today={today} timeZone={timeZone} nowMs={now} durationFormat={durationFormat} />
       )}
         </div>
-        <GoalsPanel
-          entries={currentEntries}
-          today={today}
-          week={currentWeek}
-          timeZone={timeZone}
-          nowMs={now}
-          durationFormat={durationFormat}
-        />
+        {sidePanel && (
+          <GoalsPanel
+            entries={currentEntries}
+            today={today}
+            week={currentWeek}
+            timeZone={timeZone}
+            nowMs={now}
+            durationFormat={durationFormat}
+          />
+        )}
       </div>
     </div>
   );

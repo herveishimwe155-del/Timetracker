@@ -19,7 +19,7 @@ import { dayKey, formatClock, timeOfDay } from "@/lib/time";
 import { ProjectPicker } from "@/components/projects/ProjectPicker";
 import { TagPicker } from "@/components/projects/TagPicker";
 import { entryErrorMessage, tagIdsOf, useEntryActions, useEntryPages, useRunningEntry, type Entry } from "@/lib/queries/entries";
-import { useSettings } from "@/lib/queries/profile";
+import { missingRequired, useEntryRules, useSettings } from "@/lib/queries/profile";
 import { defaultRange } from "@/lib/entry-range";
 import { resolveTimes, type OriginalTimes } from "@/lib/entry-times";
 
@@ -103,6 +103,7 @@ function EditorForm({
       : null,
   );
   const [error, setError] = useState<string | null>(null);
+  const rules = useEntryRules();
   const pending = create.isPending || update.isPending;
 
   const set = <K extends keyof typeof values>(key: K, value: (typeof values)[K]) => {
@@ -118,6 +119,8 @@ function EditorForm({
     event.preventDefault();
     const parsed = form.safeParse(values);
     if (!parsed.success) return setError(parsed.error.issues[0].message);
+    const problem = missingRequired(rules, parsed.data);
+    if (problem) return setError(problem);
 
     const { startAt, stopAt } = resolveTimes(parsed.data, original, timeZone);
     const fields = {

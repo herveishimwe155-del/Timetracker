@@ -14,6 +14,7 @@ import {
 } from "@/lib/queries/entries";
 import { CommandPalette } from "./CommandPalette";
 import { useRequireAccount } from "@/lib/guest";
+import { missingRequired, useEntryRules } from "@/lib/queries/profile";
 
 /** Project, tags and billable chosen in the timer bar before a timer starts. */
 export type TimerDraft = { projectId: string | null; tagIds: string[]; billable: boolean };
@@ -58,6 +59,7 @@ export function AppCommandsProvider({ children }: { children: React.ReactNode })
   const { data: running } = useRunningEntry();
   const { start, stop, remove, create } = useEntryActions();
   const requireAccount = useRequireAccount();
+  const rules = useEntryRules();
   useRealtimeSync();
 
   const onError = useCallback((e: unknown) => toast.error(entryErrorMessage(e)), []);
@@ -65,9 +67,19 @@ export function AppCommandsProvider({ children }: { children: React.ReactNode })
   const startTimer = useCallback(
     (fields: Partial<EntryFields> = {}) => {
       if (requireAccount()) return;
+      const problem = missingRequired(rules, {
+        description: fields.description ?? "",
+        projectId: fields.project_id ?? null,
+        tagIds: fields.tag_ids ?? [],
+      });
+      if (problem) {
+        toast.error(problem);
+        document.getElementById(TIMER_INPUT_ID)?.focus();
+        return;
+      }
       start.mutate(fields, { onError });
     },
-    [start, onError, requireAccount],
+    [start, onError, requireAccount, rules],
   );
 
   // Guests can look at the editor's entry points, but creating needs an account.
