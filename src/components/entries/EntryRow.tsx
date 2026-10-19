@@ -13,13 +13,14 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { TimerDigits } from "@/components/timer/TimerDigits";
 import { ProjectDot } from "@/components/projects/ProjectDot";
 import { useCatalogMaps } from "@/lib/queries/catalog";
-import { useSettings } from "@/lib/queries/profile";
+import { useEntryRules, useSettings } from "@/lib/queries/profile";
 import { useAppCommands } from "@/components/command/AppCommands";
 import { dayKey, displayTime, entrySeconds } from "@/lib/time";
 import { tagIdsOf, type Entry } from "@/lib/queries/entries";
 
 export function EntryRow({ entry, timeZone, nowMs }: { entry: Entry; timeZone: string; nowMs: number }) {
   const { durationFormat, timeFormat } = useSettings();
+  const { showTimes } = useEntryRules();
   const { startTimer, openEditor, deleteEntry } = useAppCommands();
   const pending = entry.id.startsWith("temp-");
   const catalog = useCatalogMaps();
@@ -91,10 +92,12 @@ export function EntryRow({ entry, timeZone, nowMs }: { entry: Entry; timeZone: s
         <DollarSign className="size-3.5 shrink-0 text-brand" strokeWidth={2} aria-label="Billable" />
       )}
 
-      <span className="tabular hidden shrink-0 text-xs text-muted-foreground sm:inline">
-        {displayTime(entry.start_at, timeZone, timeFormat)}–{entry.stop_at ? displayTime(entry.stop_at, timeZone, timeFormat) : "now"}
-        {crossesMidnight && <sup className="ml-0.5">+1</sup>}
-      </span>
+      {showTimes && (
+        <span className="tabular hidden shrink-0 text-xs text-muted-foreground sm:inline">
+          {displayTime(entry.start_at, timeZone, timeFormat)}–{entry.stop_at ? displayTime(entry.stop_at, timeZone, timeFormat) : "now"}
+          {crossesMidnight && <sup className="ml-0.5">+1</sup>}
+        </span>
+      )}
 
       <TimerDigits seconds={seconds} size="sm" format={durationFormat} className="w-[8ch] shrink-0 text-right" />
 

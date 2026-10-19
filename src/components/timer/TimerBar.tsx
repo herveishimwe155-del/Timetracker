@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { DollarSign, Play, Square } from "lucide-react";
+import { DollarSign, Loader2, Play, Plus, Square, Timer } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -12,15 +12,67 @@ import { ProjectPicker } from "@/components/projects/ProjectPicker";
 import { TagPicker } from "@/components/projects/TagPicker";
 import { useNow } from "@/lib/queries/clock";
 import { entryErrorMessage, tagIdsOf, useEntryActions, useRunningEntry, type Entry } from "@/lib/queries/entries";
-import { entrySeconds, formatClock } from "@/lib/time";
+import { dayKey, entrySeconds, formatClock, formatDuration, timeOfDay, wallTimeToInstant } from "@/lib/time";
+import { useLocalStorageFlag } from "@/hooks/use-local-storage-flag";
+import { missingRequired, useEntryRules, useSettings } from "@/lib/queries/profile";
+import { useRequireAccount } from "@/lib/guest";
 import { TimerDigits } from "./TimerDigits";
 
 export function TimerBar() {
   const { data: running = null } = useRunningEntry();
-  const { update } = useEntryActions();
+  const { update, create } = useEntryActions();
   const { toggleTimer, startFromBar, draft, setDraft } = useAppCommands();
+  const { timeZone, durationFormat } = useSettings();
+  const rules = useEntryRules();
+  const requireAccount = useRequireAccount();
   const now = useNow(1000, running !== null);
   const elapsed = running ? entrySeconds(running, now) : 0;
+  // Manual mode: type a start and end instead of running a timer (Toggl's "+" mode).
+  const [manualPref, setManualPref] = useLocalStorageFlag("timer-manual-mode", false);
+  const manual = manualPref && !running;
+  const [times, setTimes] = useState({ start: "", end: "" });
+  const [inputKey, setInputKey] = useState(0);
+
+  const enterManual = () => {
+    const at = Date.now();
+    setTimes({ start: timeOfDay(at - 30 * 60_000, timeZone), end: timeOfDay(at, timeZone) });
+    setManualPref(true);
+  };
+
+  const manualSeconds = (() => {
+    if (!times.start || !times.end) return 0;
+    const [sh, sm] = times.start.split(":").map(Number);
+    const [eh, em] = times.end.split(":").map(Number);
+    return Math.max(0, (eh * 60 + em - (sh * 60 + sm)) * 60);
+  })();
+
+  const addManual = () => {
+    if (requireAccount()) return;
+    const description = (document.getElementById(TIMER_INPUT_ID) as HTMLInputElement | null)?.value.trim() ?? "";
+    if (!times.start || !times.end) return toast.error("Enter a start and an end time.");
+    if (manualSeconds <= 0) return toast.error("The end time must be after the start time.");
+    const problem = missingRequired(rules, { description, projectId: draft.projectId, tagIds: draft.tagIds });
+    if (problem) return toast.error(problem);
+    const day = dayKey(Date.now(), timeZone);
+    create.mutate(
+      {
+        description,
+        project_id: draft.projectId,
+        billable: draft.billable,
+        start_at: wallTimeToInstant(day, times.start, timeZone).toISOString(),
+        stop_at: wallTimeToInstant(day, times.end, timeZone).toISOString(),
+        tagIds: draft.tagIds,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Entry added");
+          setDraft((d) => ({ ...d, projectId: null, tagIds: [], billable: false }));
+          setInputKey((k) => k + 1);
+        },
+        onError: (e) => toast.error(entryErrorMessage(e)),
+      },
+    );
+  };
 
   useRunningTitle(running, elapsed);
 
@@ -37,9 +89,10 @@ export function TimerBar() {
   return (
     <div role="region" aria-label="Current timer" className="glass relative z-10 flex shrink-0 flex-wrap items-center gap-x-2 gap-y-1 px-3 py-2 sm:h-14 sm:flex-nowrap sm:py-0 md:px-4">
       <DescriptionInput
+        key={inputKey}
         initial={running?.description ?? ""}
         running={running !== null}
-        onStart={startFromBar}
+        onStart={manual ? addManual : startFromBar}
         onSave={(description) => saveRunning({ description })}
       />
 
@@ -69,27 +122,88 @@ export function TimerBar() {
         <TooltipContent>{billable ? "Billable" : "Not billable"}</TooltipContent>
       </Tooltip>
 
-      <TimerDigits seconds={elapsed} size="lg" running={running !== null} className="ml-auto w-[8ch] text-right sm:ml-0" />
-
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            size="icon"
-            onClick={() => {
-              if (running) return toggleTimer();
-              startFromBar();
-            }}
-            aria-label={running ? "Stop timer" : "Start timer"}
-            aria-keyshortcuts="S"
-            className={cn("size-8 rounded-full", running && "animate-glow motion-reduce:animate-none")}
-          >
-            {running ? <Square className="fill-current" /> : <Play className="fill-current" />}
+      {manual ? (
+        <>
+          <div className="ml-auto flex items-center gap-1 sm:ml-0">
+            <Input
+              type="time"
+              aria-label="Start time"
+              value={times.start}
+              onChange={(e) => setTimes((t) => ({ ...t, start: e.target.value }))}
+              className="tabular h-8 w-[6.75rem]"
+            />
+            <span aria-hidden className="text-muted-foreground">
+              –
+            </span>
+            <Input
+              type="time"
+              aria-label="End time"
+              value={times.end}
+              onChange={(e) => setTimes((t) => ({ ...t, end: e.target.value }))}
+              className="tabular h-8 w-[6.75rem]"
+            />
+          </div>
+          <span className="tabular hidden w-[8ch] text-right text-muted-foreground sm:inline" aria-live="polite">
+            {formatDuration(manualSeconds, durationFormat)}
+          </span>
+          <Button onClick={addManual} disabled={create.isPending} className="h-8">
+            {create.isPending ? <Loader2 className="animate-spin" /> : <Plus />}
+            Add
           </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          {running ? "Stop" : "Start"} <kbd className="tabular ml-1 text-muted-foreground">S</kbd>
-        </TooltipContent>
-      </Tooltip>
+        </>
+      ) : (
+        <>
+          <TimerDigits seconds={elapsed} size="lg" running={running !== null} className="ml-auto w-[8ch] text-right sm:ml-0" />
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="icon"
+                onClick={() => {
+                  if (running) return toggleTimer();
+                  startFromBar();
+                }}
+                aria-label={running ? "Stop timer" : "Start timer"}
+                aria-keyshortcuts="S"
+                className={cn("size-8 rounded-full", running && "animate-glow motion-reduce:animate-none")}
+              >
+                {running ? <Square className="fill-current" /> : <Play className="fill-current" />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {running ? "Stop" : "Start"} <kbd className="tabular ml-1 text-muted-foreground">S</kbd>
+            </TooltipContent>
+          </Tooltip>
+        </>
+      )}
+
+      {/* Timer mode or manual mode, stacked like Toggl's. Hidden while a timer runs. */}
+      {!running && (
+        <div className="flex flex-col" role="group" aria-label="Entry mode">
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            aria-label="Timer mode"
+            aria-pressed={!manual}
+            title="Timer mode"
+            onClick={() => setManualPref(false)}
+            className={cn("text-muted-foreground", !manual && "text-foreground")}
+          >
+            <Timer />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            aria-label="Manual mode"
+            aria-pressed={manual}
+            title="Manual mode: type a start and end"
+            onClick={enterManual}
+            className={cn("text-muted-foreground", manual && "text-foreground")}
+          >
+            <Plus />
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

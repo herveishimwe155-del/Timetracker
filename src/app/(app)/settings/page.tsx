@@ -8,14 +8,18 @@ import { ThemeSettings } from "@/components/settings/ThemeSettings";
 import { createClient } from "@/lib/supabase/server";
 import { BillingSettings } from "@/components/settings/BillingSettings";
 import { billingConfigured } from "@/lib/billing/flutterwave";
+import { EntryRulesSettings } from "@/components/settings/EntryRulesSettings";
+import { ImportSettings } from "@/components/settings/ImportSettings";
 
 export const metadata: Metadata = { title: "Settings" };
 
 const SECTIONS = [
   { id: "appearance", title: "Appearance" },
   { id: "preferences", title: "Profile and preferences" },
+  { id: "entries", title: "Time entries" },
   { id: "security", title: "Account and security" },
   { id: "billing", title: "Plan and billing" },
+  { id: "import", title: "Import" },
   { id: "data", title: "Your data" },
   { id: "shortcuts", title: "Keyboard shortcuts" },
   { id: "danger", title: "Danger zone" },
@@ -33,8 +37,10 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
   const content: Record<(typeof SECTIONS)[number]["id"], React.ReactNode> = {
     appearance: <ThemeSettings />,
     preferences: <SettingsForm />,
+    entries: <EntryRulesSettings />,
     security: <SecuritySettings email={email} />,
     billing: <BillingSettings configured={billingConfigured()} result={result} />,
+    import: <ImportSettings />,
     data: <DataSettings />,
     shortcuts: <ShortcutsList />,
     danger: <DangerZone />,

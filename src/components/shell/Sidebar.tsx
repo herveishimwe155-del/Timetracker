@@ -11,7 +11,7 @@ import { signOut } from "@/lib/auth/actions";
 import { signUpUrl } from "@/lib/guest";
 import { useResolvedTheme, useThemePreference } from "@/lib/theme";
 import { APP_NAME, LogoMark } from "./Logo";
-import { footerNav, mainNav, type NavItem } from "./nav";
+import { footerNav, navSections, type NavItem } from "./nav";
 
 function NavLink({ item, active, collapsed }: { item: NavItem; active: boolean; collapsed: boolean }) {
   const Icon = item.icon;
@@ -74,9 +74,21 @@ export function Sidebar({ email, guest = false }: { email: string | null; guest?
         {!collapsed && <span className="hidden truncate font-semibold tracking-tight md:inline">{APP_NAME}</span>}
       </div>
 
-      <nav aria-label="Main" className="flex flex-1 flex-col gap-0.5 p-2">
-        {mainNav.map((item) => (
-          <NavLink key={item.href} item={item} active={isActive(item.href)} collapsed={collapsed} />
+      <nav aria-label="Main" className="flex flex-1 flex-col gap-3 overflow-y-auto p-2">
+        {navSections.map((section) => (
+          <div key={section.title} className="flex flex-col gap-0.5">
+            <h2
+              className={cn(
+                "px-2 pt-1 pb-0.5 text-[11px] font-medium tracking-wider text-muted-foreground uppercase",
+                collapsed ? "sr-only" : "sr-only md:not-sr-only",
+              )}
+            >
+              {section.title}
+            </h2>
+            {section.items.map((item) => (
+              <NavLink key={item.href} item={item} active={isActive(item.href)} collapsed={collapsed} />
+            ))}
+          </div>
         ))}
       </nav>
 

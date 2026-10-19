@@ -151,7 +151,47 @@ export function useTagActions() {
     track("tag_created");
     return data;
   });
-  return { create };
+  const update = useCatalogWrite(catalogKeys.tags, "tag", async ({ id, name }: { id: string; name: string }) => {
+    const { data, error } = await createClient().from("tags").update({ name }).eq("id", id).select().single();
+    if (error) throw error;
+    return data;
+  });
+  const client = useQueryClient();
+  // Deleting a tag removes it from its entries too (the database cascades), so refresh entries.
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await createClient().from("tags").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onError: (e) => toast.error(catalogErrorMessage(e, "tag")),
+    onSettled: () => {
+      client.invalidateQueries({ queryKey: catalogKeys.tags });
+      client.invalidateQueries({ queryKey: ["entries"] });
+    },
+  });
+  return { create, update, remove };
+}
+
+export type TagStats = { entryCount: number; trackedSeconds: number; lastUsedAt: string | null };
+
+/** How often each tag is used, and for how long (from the tag_stats function). */
+export function useTagStats() {
+  const guest = useIsGuest();
+  return useQuery({
+    ...guestQuery(guest, new Map<string, TagStats>()),
+    // Under "entries" so it refreshes whenever entries change.
+    queryKey: ["entries", "tag-stats"],
+    queryFn: async () => {
+      const { data, error } = await createClient().rpc("tag_stats");
+      if (error) throw error;
+      return new Map<string, TagStats>(
+        data.map((r) => [
+          r.tag_id,
+          { entryCount: Number(r.entry_count), trackedSeconds: Number(r.tracked_seconds), lastUsedAt: r.last_used_at },
+        ]),
+      );
+    },
+  });
 }
 
 export type ProjectStats = { trackedSeconds: number; lastTrackedAt: string | null; entryCount: number };

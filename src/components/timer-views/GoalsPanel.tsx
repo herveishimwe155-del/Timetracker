@@ -129,10 +129,10 @@ export function GoalsPanel({ entries, today, week, timeZone, nowMs, durationForm
   );
 }
 
-const statusText = (s: ReturnType<typeof goalProgress>["status"]) =>
+export const statusText = (s: ReturnType<typeof goalProgress>["status"]) =>
   ({ met: "Goal met", behind: "In progress", within: "Within limit", over: "Over limit" })[s];
 
-function GoalDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function GoalDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-sm">{open && <GoalForm onDone={onClose} />}</DialogContent>

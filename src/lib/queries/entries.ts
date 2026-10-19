@@ -49,6 +49,8 @@ export function entryErrorMessage(error: unknown): string {
   if (e?.code === "23514") return "The end time must be after the start time.";
   if (e?.code === "23505") return "A timer is already running. Stop it first.";
   if (e?.code === "23503") return "That project or tag no longer exists. Pick another one.";
+  if (e?.code === "TK423") return "That day is locked in your settings, so entries there can't be added or changed.";
+  if (e?.code === "TK422") return e.message ? `${e.message}. Remove a tag and try again.` : "Too many tags on this entry.";
   return "Something went wrong saving your entry. Try again.";
 }
 

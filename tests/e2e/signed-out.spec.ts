@@ -81,3 +81,31 @@ test.describe("guest mode", () => {
     await expect(page.getByRole("complementary", { name: "Guest mode" })).toBeVisible();
   });
 });
+
+test.describe("guest mode: Toggl pages", () => {
+  for (const [path, heading] of [
+    ["/overview", "Overview"],
+    ["/tags", "Tags"],
+    ["/goals", "Goals"],
+  ] as const) {
+    test(`${heading} opens empty and is accessible`, async ({ page }) => {
+      await page.goto(path);
+      await expect(page.getByRole("heading", { level: 1, name: heading })).toBeAttached();
+      await expectAccessible(page);
+    });
+  }
+
+  test("creating a tag asks you to sign up", async ({ page }) => {
+    await page.goto("/tags");
+    await page.getByRole("button", { name: "New tag" }).click();
+    await expect(page).toHaveURL(/\/login\?mode=signup&next=%2Ftags/);
+  });
+
+  test("manual mode adds an entry only after signing up", async ({ page }) => {
+    await page.goto("/timer");
+    await page.getByRole("button", { name: "Manual mode" }).click();
+    await expect(page.getByLabel("Start time")).toBeVisible();
+    await page.getByRole("button", { name: "Add", exact: true }).click();
+    await expect(page).toHaveURL(/\/login\?mode=signup/);
+  });
+});
