@@ -30,7 +30,11 @@ export function TimerBar() {
   // Manual mode: type a start and end instead of running a timer (Toggl's "+" mode).
   const [manualPref, setManualPref] = useLocalStorageFlag("timer-manual-mode", false);
   const manual = manualPref && !running;
-  const [times, setTimes] = useState({ start: "", end: "" });
+  // Last 30 minutes by default, so manual mode never opens with empty times.
+  const [times, setTimes] = useState(() => {
+    const at = Date.now();
+    return { start: timeOfDay(at - 30 * 60_000, timeZone), end: timeOfDay(at, timeZone) };
+  });
   const [inputKey, setInputKey] = useState(0);
 
   const enterManual = () => {

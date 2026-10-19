@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { CalendarDays, ChevronLeft, ChevronRight, PanelRightClose, PanelRightOpen, Settings2 } from "lucide-react";
+import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, PanelRightClose, PanelRightOpen, Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { NewEntryButton } from "@/components/entries/NewEntryButton";
@@ -21,7 +21,7 @@ import { ProjectSummaryBar } from "./ProjectSummaryBar";
 import { TimesheetView } from "./TimesheetView";
 import { CountUp } from "@/components/motion/CountUp";
 import Link from "next/link";
-import { NativeSelect } from "@/components/ui/native-select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export const VIEWS = ["calendar", "list", "timesheet"] as const;
 export type TimerView = (typeof VIEWS)[number];
@@ -153,15 +153,20 @@ export function TimerViews() {
 
         <div className="ml-auto flex flex-wrap items-center gap-2">
           {view === "calendar" && (
-            <NativeSelect
-              aria-label="Calendar range"
-              value={weekMode ? "week" : "day"}
-              onChange={(e) => setWeekMode(e.target.value === "week")}
-              className="h-8 w-32"
-            >
-              <option value="day">Day view</option>
-              <option value="week">Week view</option>
-            </NativeSelect>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" aria-label={`Calendar range: ${weekMode ? "Week" : "Day"} view`} className="w-32 justify-between">
+                  {weekMode ? "Week view" : "Day view"}
+                  <ChevronDown className="text-muted-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-40">
+                <DropdownMenuRadioGroup value={weekMode ? "week" : "day"} onValueChange={(v) => setWeekMode(v === "week")}>
+                  <DropdownMenuRadioItem value="day">Day view</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="week">Week view</DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
 
           {/* View switch */}

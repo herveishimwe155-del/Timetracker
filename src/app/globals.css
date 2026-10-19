@@ -540,3 +540,13 @@
     font-feature-settings: "tnum" 1, "zero" 1;
   }
 }
+
+/* Native dropdown lists (the <option> popup) follow the smoky glass instead of the OS's white list. */
+[data-slot="native-select"] {
+  color-scheme: dark;
+}
+[data-slot="native-select"] option,
+[data-slot="native-select"] optgroup {
+  background-color: #1c1c22;
+  color: #fafafa;
+}

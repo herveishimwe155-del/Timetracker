@@ -17,6 +17,7 @@ import { nextProjectColor } from "@/lib/project-colors";
 import { useClients, useProjectActions, useProjects, type Project } from "@/lib/queries/catalog";
 import { ProjectDot } from "./ProjectDot";
 import { useRequireAccount } from "@/lib/guest";
+import { ProjectDialog } from "./ProjectDialog";
 
 type Props = {
   value: string | null;
@@ -32,6 +33,7 @@ type Props = {
 export function ProjectPicker({ value, onChange, variant = "compact", disabled, triggerLabel }: Props) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [dialog, setDialog] = useState(false);
   const requireAccount = useRequireAccount();
   const { data: projects = [] } = useProjects();
   const { data: clients = [] } = useClients();
@@ -73,6 +75,7 @@ export function ProjectPicker({ value, onChange, variant = "compact", disabled, 
   };
 
   return (
+    <>
     <Popover open={open} onOpenChange={(o) => (setOpen(o), o || setSearch(""))}>
       <PopoverTrigger asChild>
         {triggerLabel ? (
@@ -112,7 +115,7 @@ export function ProjectPicker({ value, onChange, variant = "compact", disabled, 
                 No projects yet. Type a name to create one.
               </CommandItem>
             )}
-            <CommandEmpty>{trimmed ? "No matching project." : "No projects yet."}</CommandEmpty>
+            {trimmed && <CommandEmpty>No matching project.</CommandEmpty>}
             {value && (
               <CommandGroup>
                 <CommandItem value="__none__ no project" onSelect={() => choose(null)}>
@@ -147,7 +150,27 @@ export function ProjectPicker({ value, onChange, variant = "compact", disabled, 
             )}
           </CommandList>
         </Command>
+        {/* Toggl-style footer: the full form, with colour and client. */}
+        <div className="border-t border-line p-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="w-full justify-center text-brand hover:text-brand"
+            onClick={() => {
+              if (requireAccount()) return;
+              setOpen(false);
+              setSearch("");
+              setDialog(true);
+            }}
+          >
+            <Plus />
+            Create a new project
+          </Button>
+        </div>
       </PopoverContent>
     </Popover>
+    <ProjectDialog target={dialog ? { mode: "create" } : null} onClose={() => setDialog(false)} onCreated={(id) => onChange(id)} />
+    </>
   );
 }
